@@ -177,7 +177,7 @@ vec2 mainAudio( vec4 time ) {
         wavetable( time.z * freq, mix( 0.2E-4, 3E-4, diceTime.x ), -0.0001 * time.z + float( i ) )
       );
     }
-    float amp = 0.06 * sidechain;
+    float amp = 0.07 * sidechain;
     dest += amp * wave;
   }
 
@@ -196,7 +196,7 @@ vec2 mainAudio( vec4 time ) {
       wave += env * saw( phase ) * exp( -0.7 * fi );
       wave += env * saw( phase * P5 ) * exp( -0.7 * fi );
     }
-    dest += 0.14 * sidechain * wave;
+    dest += 0.17 * sidechain * wave;
   }
 
   return aSaturate( 1.2 * dest );
