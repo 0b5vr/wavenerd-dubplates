@@ -134,17 +134,17 @@ vec2 mainAudio( vec4 time ) {
 
   // -- clav -------------------------------------------------------------------
   {
-    float t = mod( mod( mod( time.z - 0.75, 3.75 beat ), 2.75 beat ), 0.75 beat );
+    float t = mod( mod( mod( time.z - 0.75 beat, 3.75 beat ), 2.75 beat ), 0.75 beat );
     float amp = exp( -100.0 * t );
     float phase = t + tri( 700.0 * t );
     dest += 0.2 * amp * tri( phase * vec2( 0.9, 1.1 ) );
   }
-  
+
   // -- clap ---------------------------------------------------------------------------------------
   {
     dest += 0.2 * clap( mod( time.y - 1.0 beat, 2.0 beat ) );
   }
-  
+
   // -- crash ------------------------------------------------------------------
   {
     float amp = 0.2 * mix( 0.4, 1.0, sidechain ) * exp( -time.z );
@@ -155,8 +155,8 @@ vec2 mainAudio( vec4 time ) {
   {
     if ( mod( time.x, 0.25 beat ) < 0.2 beat ) {
       float t = mod( time.z, 0.25 beat );
-      vec2 dice = random2( 0.94 * lofi( time.z + 4.12, 0.25 beat ) );
-      vec2 dice2 = random2( 0.94 * lofi( time.z + 2.25, 0.25 beat ) );
+      vec2 dice = random2( 0.94 * lofi( time.z, 0.25 beat ) + 4.12 );
+      vec2 dice2 = random2( 0.94 * lofi( time.z, 0.25 beat ) + 2.25 );
       float filt = (
         100.0 +
         mix( 1000.0, 4000.0, dice2.x ) * exp( -mix( 20.0, 40.0, dice2.y ) * t )
