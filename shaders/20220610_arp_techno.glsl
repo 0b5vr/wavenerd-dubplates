@@ -47,17 +47,16 @@ vec2 random2( float t ) {
   return fract( sampleNearest( sample_noise, sample_noise_meta, mod( t, sample_noise_meta.w ) ) );
 }
 
-vec2 shotgun(float t,float spread,float snap,float tone){
+vec2 shotgun(float t,float spread,float snap){
   vec2 sum=vec2(0);
-  for(int i=0;i<128;i++){
+  for(int i=0;i<64;i++){
     float dice=fs(float(i));
 
     float partial=exp2(spread*dice);
     partial=mix(partial,floor(partial+.5),snap);
-    partial*=exp2(tone);
 
     vec2 pan=mix(vec2(2,0),vec2(0,2),fs(dice));
-    sum+=sin(TAU*440.*t*partial)*pan;
+    sum+=sin(TAU*t*partial)*pan;
   }
   return sum/128.;
 }
@@ -79,15 +78,20 @@ vec2 rimshot( float t ) {
   return clip( 4.0 * wave * exp( -t * 400.0 ) );
 }
 
-vec2 filterSaw( float freq, float time, float cutoff, float resonance ) {
-  if ( time < 0.0 ) { return vec2( 0.0 ); }
-  vec2 sum = vec2( 0.0 );
-  for ( int i = 1; i <= 32; i ++ ) {
-    float fi = float( i );
-    float cut = smoothstep( cutoff * 1.2, cutoff * 0.8, fi * freq );
-    cut += smoothstep( cutoff * 0.3, 0.0, abs( cutoff - fi * freq ) ) * resonance;
-    vec2 offset = vec2( -1.0, 1.0 ) * ( 0.1 * ( fi - 1.0 ) );
-    sum += sin( fi * freq * time * TAU + offset ) / fi * cut;
+vec2 filterSaw(float freq,float t,float cutoff,float reso){
+  vec2 sum=vec2(0);
+  for(int i=1;i<=64;i++){
+    float fi=float(i);
+    float freqp=freq*fi;
+    float omega=freqp/cutoff;
+    float omegaSq=omega*omega;
+
+    float a=4.0*reso+omegaSq*omegaSq-6.0*omegaSq+1.0;
+    float b=4.0*omega*(omegaSq-1.0);
+    float cut=1.0/sqrt(a*a+b*b);
+    float offset=atan(a,b);
+
+    sum+=0.66*sin(freqp*t*TAU-offset)/fi*cut;
   }
   return sum;
 }
@@ -110,7 +114,7 @@ vec2 mainAudio( vec4 time ) {
     float vel = fract( floor( time.y / ( 0.25 beat ) ) * 0.62 + 0.67 );
     float amp = mix( 0.2, 0.3, vel );
     float decay = mix( 140.0, 10.0, vel );
-    dest += amp*tanh(8.*shotgun(t,2.,.0,3.))*exp( -t * decay );
+    dest += amp*tanh(8.*shotgun(4000.*t,2.,.0))*exp( -t * decay );
   }
 
   // -- rim ----------------------------------------------------------------------------------------
@@ -123,17 +127,24 @@ vec2 mainAudio( vec4 time ) {
     }
   }
 
+  // -- perc ---------------------------------------------------------------------------------------
+  {
+    float t = mod(time.y-1. beat,2. beat);
+
+    dest+=.14*tanh(10.*shotgun(1000.*t,1.5,.4))*exp(-4.*t);
+  }
+
   // -- bass ---------------------------------------------------------------------------------------
   {
     // float t = mod( aTime - 0.5 beat, 1.0 beat );
     float t = mod( time.x, 0.25 beat );
     float decay = exp( -20.0 * t );
-    float cutoff = mix( 100.0, 500.0, decay );
+    float cutoff = mix( 100.0, 600.0, decay );
     float noteI = 0.0;
     float trans = mod( time.z, 16.0 beat ) < ( 12.0 beat ) ? 0.0 : -2.0;
     float freq = p2f( 30.0 + trans );
-    vec2 wave = filterSaw( freq, t + 0.004 * sin( TAU * 2.0 * freq * t ), cutoff, 1.0 );
-    dest += 0.4 * sidechain * decay * wave;
+    vec2 wave = filterSaw( freq, t + 0.004 * sin( TAU * 2.0 * freq * t ), cutoff, 0.5 );
+    dest += 0.4 * sidechain * decay * tanh(5.*wave);
   }
 
   // -- arp ----------------------------------------------------------------------------------------
@@ -185,9 +196,9 @@ vec2 mainAudio( vec4 time ) {
       vec2 pan = mix( vec2( 0.0, 1.0 ), vec2( 1.0, 0.0 ), fi / 47.0 );
 
       vec2 uv = vec2( 0.5 );
-      uv += 0.5 * time.z;
-      vec2 uv1 = uv + 0.05 * orbit( freq * t + offu );
-      vec2 uv2 = uv + 0.05 * orbit( freq * t + offu + 0.13 );
+      uv += 0.1 * time.z;
+      vec2 uv1 = uv + 0.1 * orbit( freq * t + offu );
+      vec2 uv2 = uv + 0.1 * orbit( freq * t + offu + 0.07 );
       float diff = texture( image_fbm, uv1 ).x - texture( image_fbm, uv2 ).x;
 
       float amp = 0.2 * mix( 0.3, 1.0, sidechain );
@@ -197,5 +208,5 @@ vec2 mainAudio( vec4 time ) {
     dest += clip( sum );
   }
 
-  return clip( 1.2 * dest );
+  return tanh(1.5*dest);
 }

@@ -19,6 +19,8 @@
 #define fs(i) (fract(sin((i)*114.514)*1919.810))
 #define inRange(a,b,x) ((a)<=(x)&&(x)<(b))
 
+const float TRANSPOSE=6.;
+
 uniform sampler2D image_fbm;
 
 float sinc(float x){
@@ -32,6 +34,11 @@ vec2 orbit(float t){
 float euclideanRhythmsInteg(float pulses,float steps,float time){
   float t=mod(floor(time)*pulses,steps);
   return floor((t-pulses)/pulses)+1.+fract(time);
+}
+
+float euclideanRhythmsRest(float pulses,float steps,float time){
+  float t=mod(floor(time)*pulses,steps);
+  return floor((steps-t-1.)/pulses)+1.-fract(time);
 }
 
 vec2 mainAudio(vec4 time){
@@ -55,7 +62,11 @@ vec2 mainAudio(vec4 time){
     float t=time.x;
 
     vec2 uv=orbit(4.2*t)+t;
-    dest+=.5*sidechain*texture(image_fbm,uv).x;
+    dest+=.5*sidechain*mix(
+      sin(TAU*p2f(24.+TRANSPOSE)*t),
+      texture(image_fbm,uv).x,
+      0.5
+    );
   }
 
   // hihat
@@ -172,7 +183,7 @@ vec2 mainAudio(vec4 time){
       float delay=floor(fs(fi+2.)*3.);
       float t=mod(time.y-.75 beat,2. beat)-delay*.75 beat;
 
-      float freq=p2f(float(42+pitchTable[i%3]))*mix(.997,1.003,fs(fi));
+      float freq=p2f(36.+TRANSPOSE+float(pitchTable[i%3]))*mix(.997,1.003,fs(fi));
       float offu=fs(fi+4.);
       vec2 pan=mix(vec2(0.,1.),vec2(1.,0.),fract(fi*.61));
 
@@ -190,5 +201,5 @@ vec2 mainAudio(vec4 time){
     dest+=sum;
   }
 
-  return tanh(2.*dest);
+  return tanh(1.5*dest);
 }

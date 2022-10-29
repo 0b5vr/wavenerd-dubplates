@@ -85,7 +85,7 @@ vec2 shotgun(float phase,float spread,float snap){
   return sum/64.;
 }
 
-vec2 filterSaw(float freq,float t,float cutoff,float reso){
+vec2 filterSaw(float freq,vec2 t,float cutoff,float reso){
   vec2 sum=vec2(0);
   for(int i=1;i<=64;i++){
     float fi=float(i);
@@ -101,6 +101,10 @@ vec2 filterSaw(float freq,float t,float cutoff,float reso){
     sum+=0.66*sin(freqp*t*TAU-offset)/fi*cut;
   }
   return sum;
+}
+
+vec2 filterSaw(float freq,float t,float cutoff,float reso){
+  return filterSaw(freq,vec2(t),cutoff,reso);
 }
 
 float glidephase(float t,float t1,float p0,float p1){
@@ -143,11 +147,9 @@ vec2 mainAudio(vec4 time){
     if(inrange(time.z,0. beat,61. beat)){
       float env=linearstep(0.3,0.1,t);
 
-      dest+=.5*tanh((
-        env*tanh(1.5*sin(
-          360.*t-45.*exp(-35.*t)
-          -20.*exp(-500.*t)
-        ))
+      dest+=.5*env*tanh(2.*sin(
+        340.*t-55.*exp(-35.*t)
+        -30.*exp(-500.*t)
       ));
     }
   }
@@ -168,40 +170,47 @@ vec2 mainAudio(vec4 time){
     float t=mod(time.y-1. beat,2. beat);
 
     float env=mix(
-      exp(-30.*t),
+      exp(-20.*t),
       exp(-200.*mod(t,.01)),
       exp(-100.*max(0.,t-.02))
     );
 
-    vec2 uv=orbit(69.*t)+41.*t;
+    vec2 uv=orbit(69.4*t)+40.*t;
 
-    dest+=.3*tanh(20.*env*(vec2(
+    dest+=.25*tanh(20.*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.05).x
     )-.5));
   }
 
+  // shaker
+  {
+    float t=mod(time.y,.25 beat);
+    float st=mod(floor(time.z/(.25 beat)),4.);
+    vec3 dice=vec3(pcg3d(uvec3(st+40.)))/float(0xffffffffu);
+
+    float env=exp(-10.*t);
+
+    float m=exp(1.+2.*dice.y);
+    vec2 uv=orbit(m*72.*t)+m*55.7*t;
+
+    dest+=.1*mix(.1,1.,sidechain)*tanh(20.*env*(vec2(
+      texture(image_fbm,uv).x,
+      texture(image_fbm,uv+.1).x
+    )-.5));
+  }
+
   // fm perc
   {
-    float t=lofi(mod(time.x,.25 beat),1E-4);
-    float st=floor(time.z/(.25 beat));
-    vec3 dice=vec3(pcg3d(uvec3(st)))/float(0xffffffffu);
-    float fmfreq=exp2(8.+3.*dice.x);
-    float decay=exp2(1.+4.*fract(st*.288));
-    float fmamp=exp2(2.+3.*dice.y);
-    float wave=sin(fmamp*sin(fmfreq*t)*exp(-decay*t));
-    dest+=.04*mix(.5,1.,sidechain)*pan(fract(st*.718))*wave;
+    float t=lofi(mod(time.x,.25 beat),8E-5);
+    float st=mod(floor(time.z/(.25 beat)),8.);
+    float fmfreq=exp2(10.+3.*fract(st*.622+.1));
+    float decay=exp2(5.*fract(st*.428));
+    float fmamp=exp2(2.+4.*fract(st*.322+.8));
+    float cfreq=300.;
+    vec2 wave=sin(fmamp*sin(fmfreq*t)*exp(-decay*t)+cfreq*t+vec2(0,1));
+    dest+=.13*mix(.5,1.,sidechain)*wave;
   }
-
-  // ride
-  {
-    float t=mod(time.x-.5 beat,1. beat);
-
-    float env=exp(-5.*t);
-
-    dest+=.06*sidechain*tanh(10.*shotgun(6000.*t,1.,.0)*env);
-  }
-
 
   // clav
   {
@@ -232,30 +241,19 @@ vec2 mainAudio(vec4 time){
 
   // bass
   {
-    float t=mod(time.y,.25 beat);
-    float st=floor(time.y/(.25 beat));
+    float st=mod(floor(time.y/(.25 beat)),8.);
+    float t=euclideanRhythmsInteg(5.,8.,time.y/(.25 beat)-6.)*(.25 beat);
+    float rest=euclideanRhythmsRest(5.,8.,time.y/(.25 beat)-6.)*(.25 beat);
 
-    int arp[16]=int[](
-      -2,0,0,-2,
-      0,0,10,12,
-      0,0,18,13,
-      0,19,22,1
+    float env=linearstep(0.,.001,t)*linearstep(0.,.01,rest-.05 beat);
+    float phase=p2f(24.+TRANSPOSE)*t;
+    vec2 uv=orbit(phase);
+    float wave=mix(
+      tanh(10.*sin(TAU*phase)),
+      tanh(4.-8.*texture(image_fbm,uv).x),
+      0.2
     );
-    float l=.25 beat*min(1.,mix(.5,1.2,fract(.62*st)));
-
-    float freq=p2f(24.+TRANSPOSE+float(arp[int(st)]));
-    float env=linearstep(0.,.001,t)*linearstep(l,l-.01,t);
-    float cutoff=p2f(80.*mix(exp(-10.*t),1.,.8));
-
-    vec2 sum=vec2(0);
-    for(int i=0;i<16;i++){
-      float fi=float(i);
-      float tt=t+.01*sin(t+fi);
-      float freqt=freq*(i%4==0?3.:1.);
-      sum+=tanh(400.*exp(-40.*t)*sin(TAU*freqt*tt))*pan(.4+.2*fract(fi*.422));
-    }
-
-    dest+=.3*env*sidechain*tanh(.4*sum);
+    dest+=.4*sidechain*env*wave;
   }
 
   return tanh(1.5*dest);
