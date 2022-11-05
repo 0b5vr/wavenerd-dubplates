@@ -31,6 +31,11 @@ float envAR( float t, float l, float a, float r ) {
   return envA( t, a ) * linearstep( l, l - r, t );
 }
 
+mat2 r2d(float x){
+  float c=cos(x),s=sin(x);
+  return mat2(c, s, -s, c);
+}
+
 vec2 orbit( float t ) {
   return vec2( cos( TAU * t ), sin( TAU * t ) );
 }
@@ -166,7 +171,7 @@ vec2 mainAudio( vec4 time ) {
       float env = exp( -t * 10.0 );
       vec2 amp = saturate( 0.5 + vec2( 0.5, -0.5 ) * sin( 2.0 * fi + time.w ) * fi ) * exp( -fi ) * env;
 
-      vec2 phase = t * freq + mix( vec2( 1.0, 0.0 ), vec2( 0.0, 1.0 ), dice.y );
+      vec2 phase = t * freq + vec2( .5, 0 );
       wave += amp * (
         + saw( phase )
         + saw( P5 * phase )
@@ -193,7 +198,6 @@ vec2 mainAudio( vec4 time ) {
       float freq = p2f( float( 42 + pitchTable[ i % 8 ] ) + trans )
         * mix( 0.99, 1.01, fs( fi ) );
       float offu = fs( fi + 4.0 );
-      vec2 pan = mix( vec2( 0.0, 1.0 ), vec2( 1.0, 0.0 ), fi / 47.0 );
 
       vec2 uv = vec2( 0.5 );
       uv += 0.1 * time.z;
@@ -201,8 +205,8 @@ vec2 mainAudio( vec4 time ) {
       vec2 uv2 = uv + 0.1 * orbit( freq * t + offu + 0.07 );
       float diff = texture( image_fbm, uv1 ).x - texture( image_fbm, uv2 ).x;
 
-      float amp = 0.2 * mix( 0.3, 1.0, sidechain );
-      sum += amp * pan * diff; // fbm osc
+      float amp = 0.12 * mix( 0.3, 1.0, sidechain );
+      sum += amp * r2d(fi) * vec2(diff); // fbm osc
     }
 
     dest += clip( sum );

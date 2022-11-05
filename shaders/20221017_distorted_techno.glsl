@@ -40,6 +40,11 @@ vec2 pan(float x){
   return mix(vec2(2,0),vec2(0,2),x);
 }
 
+mat2 r2d(float x){
+  float c=cos(x),s=sin(x);
+  return mat2(c,s,-s,c);
+}
+
 float sinc(float x){
   return x==0.?1.:sin(TAU*x)/TAU/x;
 }
@@ -120,21 +125,6 @@ float glidephase(float t,float t1,float p0,float p1){
 
 vec2 mainAudio(vec4 time){
   vec2 dest=vec2(0);
-
-  // time=lofi(time,4. beat)+mod(time,1. beat);
-  // time=lofi(time,1. beat)+mod(time,.166 beat);
-  // time=lofi(time,1. beat)+mod(time,.25 beat);
-  // time=mix(
-  //   time,
-  //   lofi(time,1. beat)+mix(mod(time,1. beat),mod(time,.03),.8),
-  //   step(3. beat,time.y)
-  // );
-  // time+=mix(
-  //   0.,
-  //   -3.*(1.-exp(-4.*time.x)),
-  //   step(3. beat,time.y)
-  // );
-  time=mod(time,timeLength);
 
   float kickt;
 
@@ -221,18 +211,24 @@ vec2 mainAudio(vec4 time){
       float rest=euclideanRhythmsRest(3.,8.,st-3.)*(.25 beat);
       float trans=mod(st-1.,8.)<2.?1.:0.;
 
+      float filtenv=exp(-5.*t);
+      float cutoff=p2f(120.*mix(filtenv,1.,.5)*exp(-.1*float(iDelay)));
+
       float env=linearstep(0.,.001,t)*linearstep(0.,.01,rest)*exp(-5.*t);
       vec2 p=pan(.5+.2*float(iDelay)*sin(float(iDelay)+time.w));
       vec2 amp=env*p*exp(-float(iDelay));
 
       for(int i=0;i<3;i++){
-        float freq=p2f(48.+TRANSPOSE+trans+float(chord[i]));
-        float cutoff=p2f(120.*mix(exp(-5.*t),1.,.5)*exp(-.1*float(iDelay)));
-        sum+=amp*filterSaw(freq,t+vec2(i+0,i+6),cutoff,.1);
+        float fi=float(i);
+        float freq=p2f(48.+TRANSPOSE+trans+float(chord[i]))
+          *(1.+.01*(fract(fi*.622)-.5));
+        sum+=amp
+          *(1.-2.*mod(fi,2.))
+          *filterSaw(freq,t+vec2(0,3)+fi,cutoff,.1);
       }
     }
 
-    dest+=.3*sum;
+    dest+=.2*sum;
   }
 
   return tanh(1.5*dest);
