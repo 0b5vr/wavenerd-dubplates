@@ -16,7 +16,6 @@
 #define pwm(x,d) (step(fract(x),(d))*2.0-1.0)
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 #define p2f(i) (pow(2.,((i)-69.)/12.)*440.)
-#define fs(i) (fract(sin((i)*114.514)*1919.810))
 #define inRange(a,b,x) ((a)<=(x)&&(x)<(b))
 
 const float TRANSPOSE=6.;
@@ -27,8 +26,30 @@ float sinc(float x){
   return x==0.?1.:sin(TAU*x)/TAU/x;
 }
 
+mat2 r2d(float x){
+  float c=cos(x),s=sin(x);
+  return mat2(c, s, -s, c);
+}
+
 vec2 orbit(float t){
   return vec2(cos(TAU*t), sin(TAU*t));
+}
+
+uvec3 pcg3d( uvec3 v ) {
+  v = v * 1145141919u + 1919810u;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
+  v ^= v >> 16u;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
+  return v;
+}
+
+vec3 pcg3df( vec3 v ) {
+  uvec3 r = pcg3d( floatBitsToUint( v ) );
+  return vec3( r ) / float( 0xffffffffu );
 }
 
 float euclideanRhythmsInteg(float pulses,float steps,float time){
@@ -53,8 +74,8 @@ vec2 mainAudio(vec4 time){
     float env=exp(-20.*max(.0,t-.1));
     env*=linearstep(.0,.001,t);
 
-    dest+=.4*env*tanh(1.5*sin(360.*t-35.*exp(-35.*t)));
-    dest+=.2*tanh(1.5*sin(TAU*3.*exp(-500.*t)));
+    dest+=.6*env*tanh(1.5*sin(360.*t-35.*exp(-35.*t)));
+    dest+=.3*tanh(1.5*sin(TAU*3.*exp(-500.*t)));
   }
 
   // bass
@@ -63,8 +84,11 @@ vec2 mainAudio(vec4 time){
 
     vec2 uv=orbit(4.2*t)+t;
     dest+=.5*sidechain*mix(
-      sin(TAU*p2f(24.+TRANSPOSE)*t),
-      texture(image_fbm,uv).x,
+      vec2(sin(TAU*p2f(24.+TRANSPOSE)*t)),
+      vec2(
+        texture(image_fbm,uv).x,
+        texture(image_fbm,uv+.1).x
+      ),
       0.5
     );
   }
@@ -78,7 +102,7 @@ vec2 mainAudio(vec4 time){
 
     vec2 uv=orbit(1100.*t)+100.*t;
 
-    dest+=.4*sidechain*env*(vec2(
+    dest+=.5*sidechain*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.5).x
     )-.5);
@@ -92,14 +116,14 @@ vec2 mainAudio(vec4 time){
 
     vec2 uv=orbit(800.*t)+137.*t;
 
-    dest+=.2*sidechain*env*(vec2(
+    dest+=.3*sidechain*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.5).x
     )-.5);
 
     uv=orbit(802.*t)+137.*t;
 
-    dest-=.2*sidechain*env*(vec2(
+    dest-=.3*sidechain*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.5).x
     )-.5);
@@ -114,7 +138,7 @@ vec2 mainAudio(vec4 time){
 
     vec2 uv=orbit(127.*t)+200.*t;
 
-    dest+=0.3*env*(vec2(
+    dest+=0.4*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.05).x
     )-.5);
@@ -179,23 +203,22 @@ vec2 mainAudio(vec4 time){
 
     for(int i=0;i<96;i++){
       float fi=float(i);
+      vec3 dice=pcg3df(vec3(i));
 
-      float delay=floor(fs(fi+2.)*3.);
+      float delay=floor(dice.x*3.);
       float t=mod(time.y-.75 beat,2. beat)-delay*.75 beat;
 
-      float freq=p2f(36.+TRANSPOSE+float(pitchTable[i%3]))*mix(.997,1.003,fs(fi));
-      float offu=fs(fi+4.);
-      vec2 pan=mix(vec2(0.,1.),vec2(1.,0.),fract(fi*.61));
+      float freq=p2f(36.+TRANSPOSE+float(pitchTable[i%3]))*mix(.997,1.003,dice.y);
+      float offu=dice.z;
 
       vec2 uv=vec2(.5);
       uv+=.3*exp(-4.*t)*(orbit(freq*t+offu)+.1*orbit(freq*13.*t+offu));
       float diff=texture(image_fbm,uv).x-.5;
-      diff=fs(fi+7.)<.5?-diff:diff;
 
       float ampenv=exp(-3.*max(t-.1,0.));
       ampenv*=linearstep(.0,.001,t);
       float amp=.24*ampenv*sidechain*exp(-delay);
-      sum+=amp*pan*diff;
+      sum+=vec2(amp*diff)*r2d(70.0*dice.z);
     }
 
     dest+=sum;

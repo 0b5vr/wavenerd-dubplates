@@ -1,5 +1,3 @@
-#define TRANSPOSE 0.0
-
 #define PI 3.141592654
 #define TAU 6.283185307
 #define BPM bpm
@@ -16,11 +14,10 @@
 #define pwm(x,d) (step(fract(x),(d))*2.0-1.0)
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 #define p2f(i) (pow(2.,((i)-69.)/12.)*440.)
-#define fs(i) (fract(sin((i)*114.514)*1919.810))
 #define inRange(a,b,x) ((a)<=(x)&&(x)<(b))
 
-uniform sampler2D sample_noise;
-uniform vec4 sample_noise_meta;
+const float TRANSPOSE=6.;
+
 uniform sampler2D image_fbm;
 
 float envA( float t, float a ) {
@@ -29,6 +26,23 @@ float envA( float t, float a ) {
 
 float envAR( float t, float l, float a, float r ) {
   return envA( t, a ) * linearstep( l, l - r, t );
+}
+
+uvec3 pcg3d( uvec3 v ) {
+  v = v * 1145141919u + 1919810u;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
+  v ^= v >> 16u;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
+  return v;
+}
+
+vec3 pcg3df( vec3 v ) {
+  uvec3 r = pcg3d( floatBitsToUint( v ) );
+  return vec3( r ) / float( 0xffffffffu );
 }
 
 mat2 r2d(float x){
@@ -44,26 +58,17 @@ float chords[8] = float[](
   0.0, 0.0, 3.0, 3.0, 7.0, 7.0, 10.0, 14.0
 );
 
-vec2 noise( float t ) {
-  return sampleSinc( sample_noise, sample_noise_meta, mod( t, sample_noise_meta.w ) );
-}
-
-vec2 random2( float t ) {
-  return fract( sampleNearest( sample_noise, sample_noise_meta, mod( t, sample_noise_meta.w ) ) );
-}
-
 vec2 shotgun(float t,float spread,float snap){
   vec2 sum=vec2(0);
   for(int i=0;i<64;i++){
-    float dice=fs(float(i));
+    vec3 dice=pcg3df(vec3(i));
 
-    float partial=exp2(spread*dice);
+    float partial=exp2(spread*dice.x);
     partial=mix(partial,floor(partial+.5),snap);
 
-    vec2 pan=mix(vec2(2,0),vec2(0,2),fs(dice));
-    sum+=sin(TAU*t*partial)*pan;
+    sum+=vec2(sin(TAU*t*partial))*r2d(TAU*dice.y);
   }
-  return sum/128.;
+  return sum/64.;
 }
 
 vec2 kick( float t, float freq ) {
@@ -117,7 +122,7 @@ vec2 mainAudio( vec4 time ) {
     float t = mod( time.x, 0.25 beat );
 
     float vel = fract( floor( time.y / ( 0.25 beat ) ) * 0.62 + 0.67 );
-    float amp = mix( 0.2, 0.3, vel );
+    float amp = mix( 0.14, 0.24, vel );
     float decay = mix( 140.0, 10.0, vel );
     dest += amp*tanh(8.*shotgun(4000.*t,2.,.0))*exp( -t * decay );
   }
@@ -136,7 +141,7 @@ vec2 mainAudio( vec4 time ) {
   {
     float t = mod(time.y-1. beat,2. beat);
 
-    dest+=.14*tanh(10.*shotgun(1000.*t,1.5,.4))*exp(-4.*t);
+    dest+=.14*tanh(10.*shotgun(1100.*t,1.5,.4))*exp(-4.*t);
   }
 
   // -- bass ---------------------------------------------------------------------------------------
@@ -147,7 +152,7 @@ vec2 mainAudio( vec4 time ) {
     float cutoff = mix( 100.0, 600.0, decay );
     float noteI = 0.0;
     float trans = mod( time.z, 16.0 beat ) < ( 12.0 beat ) ? 0.0 : -2.0;
-    float freq = p2f( 30.0 + trans );
+    float freq = p2f( 24.0 + TRANSPOSE + trans );
     vec2 wave = filterSaw( freq, t + 0.004 * sin( TAU * 2.0 * freq * t ), cutoff, 0.5 );
     dest += 0.4 * sidechain * decay * tanh(5.*wave);
   }
@@ -161,12 +166,12 @@ vec2 mainAudio( vec4 time ) {
       float t = mod( time.x, 0.25 beat );
       float st = mod( floor( ( time.z - fi * 0.75 beat ) / ( 0.25 beat ) ), 256.0 );
 
-      vec2 dice = random2( 0.81 * fi );
+      vec3 dice = pcg3df( vec3( fi ) );
 
       float arpseed = fract( 0.615 * st );
       float trans = mod( st, 64.0 ) < 48.0 ? 0.0 : -2.0;
       float note = chords[ int( arpseed * 24.0 ) % 8 ] + 12.0 * floor( arpseed * 3.0 ) + trans;
-      float freq = p2f( 42.0 + note );
+      float freq = p2f( 36.0 + TRANSPOSE + note );
 
       float env = exp( -t * 10.0 );
       vec2 amp = saturate( 0.5 + vec2( 0.5, -0.5 ) * sin( 2.0 * fi + time.w ) * fi ) * exp( -fi ) * env;
@@ -177,7 +182,7 @@ vec2 mainAudio( vec4 time ) {
         + saw( P5 * phase )
         + pwm( 0.2 + 0.5 * phase, vec2( 0.5 ) )
         + pwm( 1.5 * phase, vec2( 0.5 ) )
-      );
+      ) * r2d( time.z );
     }
 
     dest += 0.24 * sidechain * wave;
@@ -191,13 +196,14 @@ vec2 mainAudio( vec4 time ) {
 
     for ( int i = 0; i < 48; i ++ ) {
       float fi = float( i );
+      vec3 dice = pcg3df( vec3( fi ) );
 
       float t = time.z;
 
       float trans = mod( time.z, 16.0 beat ) < ( 12.0 beat ) ? 0.0 : -2.0;
-      float freq = p2f( float( 42 + pitchTable[ i % 8 ] ) + trans )
-        * mix( 0.99, 1.01, fs( fi ) );
-      float offu = fs( fi + 4.0 );
+      float freq = p2f( 36.0 + TRANSPOSE + float( pitchTable[ i % 8 ] ) + trans )
+        * mix( 0.99, 1.01, dice.x );
+      float offu = dice.y;
 
       vec2 uv = vec2( 0.5 );
       uv += 0.1 * time.z;
