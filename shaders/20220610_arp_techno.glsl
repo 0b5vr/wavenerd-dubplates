@@ -108,6 +108,7 @@ vec2 filterSaw(float freq,float t,float cutoff,float reso){
 
 vec2 mainAudio( vec4 time ) {
   vec2 dest = vec2( 0.0 );
+  float trans=mod(time.z,16. beat)<(12. beat)?0.:-2.;
 
   // -- kick ---------------------------------------------------------------------------------------
   float kickTime = mod( time.x, 1.0 beat );
@@ -151,10 +152,11 @@ vec2 mainAudio( vec4 time ) {
     float decay = exp( -20.0 * t );
     float cutoff = mix( 100.0, 600.0, decay );
     float noteI = 0.0;
-    float trans = mod( time.z, 16.0 beat ) < ( 12.0 beat ) ? 0.0 : -2.0;
     float freq = p2f( 24.0 + TRANSPOSE + trans );
-    vec2 wave = filterSaw( freq, t + 0.004 * sin( TAU * 2.0 * freq * t ), cutoff, 0.5 );
-    dest += 0.4 * sidechain * decay * tanh(5.*wave);
+    dest+=.4*sidechain*decay*tanh(3.*(
+      + sin(TAU*freq*t)
+      + filterSaw( freq, t + 0.004 * sin( TAU * 2.0 * freq * t ), cutoff, 0.5 )*vec2(1,-1)
+    ));
   }
 
   // -- arp ----------------------------------------------------------------------------------------
@@ -169,7 +171,6 @@ vec2 mainAudio( vec4 time ) {
       vec3 dice = pcg3df( vec3( fi ) );
 
       float arpseed = fract( 0.615 * st );
-      float trans = mod( st, 64.0 ) < 48.0 ? 0.0 : -2.0;
       float note = chords[ int( arpseed * 24.0 ) % 8 ] + 12.0 * floor( arpseed * 3.0 ) + trans;
       float freq = p2f( 36.0 + TRANSPOSE + note );
 
@@ -200,7 +201,6 @@ vec2 mainAudio( vec4 time ) {
 
       float t = time.z;
 
-      float trans = mod( time.z, 16.0 beat ) < ( 12.0 beat ) ? 0.0 : -2.0;
       float freq = p2f( 36.0 + TRANSPOSE + float( pitchTable[ i % 8 ] ) + trans )
         * mix( 0.99, 1.01, dice.x );
       float offu = dice.y;

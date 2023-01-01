@@ -22,6 +22,10 @@ const float TRANSPOSE=6.;
 
 uniform sampler2D image_fbm;
 
+float zcross( float t, float l, float d ) {
+  return linearstep( 0.0, d, t ) * linearstep( 0.0, d, l - t );
+}
+
 float sinc(float x){
   return x==0.?1.:sin(TAU*x)/TAU/x;
 }
@@ -52,14 +56,10 @@ vec3 pcg3df( vec3 v ) {
   return vec3( r ) / float( 0xffffffffu );
 }
 
-float euclideanRhythmsInteg(float pulses,float steps,float time){
-  float t=mod(floor(time)*pulses,steps);
-  return floor((t-pulses)/pulses)+1.+fract(time);
-}
-
-float euclideanRhythmsRest(float pulses,float steps,float time){
-  float t=mod(floor(time)*pulses,steps);
-  return floor((steps-t-1.)/pulses)+1.-fract(time);
+float cheapfiltersaw(float phase,float k){
+  float wave=mod(phase,1.);
+  float c=.5+.5*cos(PI*saturate(wave/(1.-k)));
+  return (wave+c-1.)*2.+k;
 }
 
 vec2 mainAudio(vec4 time){
@@ -71,26 +71,28 @@ vec2 mainAudio(vec4 time){
   {
     float t=time.x;
 
-    float env=exp(-20.*max(.0,t-.1));
+    float env=linearstep(0.25,0.1,t);
     env*=linearstep(.0,.001,t);
 
-    dest+=.6*env*tanh(1.5*sin(360.*t-35.*exp(-35.*t)));
-    dest+=.3*tanh(1.5*sin(TAU*3.*exp(-500.*t)));
+    dest+=.6*env*tanh(2.*sin(
+      380.*t-35.*exp(-35.*t)
+      -20.*exp(-800.*t)
+    ));
   }
 
   // bass
   {
-    float t=time.x;
+    float t=mod(mod(time.y-.75 beat,2. beat),.75 beat);
 
-    vec2 uv=orbit(4.2*t)+t;
-    dest+=.5*sidechain*mix(
-      vec2(sin(TAU*p2f(24.+TRANSPOSE)*t)),
-      vec2(
-        texture(image_fbm,uv).x,
-        texture(image_fbm,uv+.1).x
-      ),
-      0.5
+    float freq=p2f(24.+TRANSPOSE);
+    float phase=freq*t;
+
+    float env=exp(-10.*t);
+    float wave=(
+      +cheapfiltersaw(phase,.4+.3*env)
+      +sin(TAU*phase)
     );
+    dest+=.7*sidechain*env*tanh(4.*wave);
   }
 
   // hihat
@@ -102,7 +104,7 @@ vec2 mainAudio(vec4 time){
 
     vec2 uv=orbit(1100.*t)+100.*t;
 
-    dest+=.5*sidechain*env*(vec2(
+    dest+=.7*sidechain*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.5).x
     )-.5);
@@ -116,14 +118,14 @@ vec2 mainAudio(vec4 time){
 
     vec2 uv=orbit(800.*t)+137.*t;
 
-    dest+=.3*sidechain*env*(vec2(
+    dest+=.4*sidechain*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.5).x
     )-.5);
 
     uv=orbit(802.*t)+137.*t;
 
-    dest-=.3*sidechain*env*(vec2(
+    dest-=.4*sidechain*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.5).x
     )-.5);
@@ -136,9 +138,9 @@ vec2 mainAudio(vec4 time){
     float env=exp(-10.*max(t-.1,0.));
     env*=1.+sinc(20.*t);
 
-    vec2 uv=orbit(127.*t)+200.*t;
+    vec2 uv=orbit(123.7*t)+200.*t;
 
-    dest+=0.4*env*(vec2(
+    dest+=.5*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.05).x
     )-.5);
@@ -157,42 +159,22 @@ vec2 mainAudio(vec4 time){
       texture(image_fbm,uv+.5).x
     )+.3*exp(-5.*t)*orbit(2200.0*t)+1500.0*t;
 
-    dest+=.2*sidechain*env*(vec2(
+    dest+=.3*sidechain*env*(vec2(
       texture(image_fbm,uv).x,
       texture(image_fbm,uv+.5).x
     )-.5);
   }
 
-  // tom
-  {
-    float t=mod(time.y-.25 beat,2. beat);
-
-    float env=exp(-20.*t);
-    env*=linearstep(.0,.001,t);
-
-    dest+=vec2(.2,.1)*env*sin(3.*sin(1100.*t-10.*exp(-100.*t)));
-  }
-
-  // tom
-  {
-    float t=mod(time.y-1.5 beat,2. beat);
-
-    float env=exp(-20.*t);
-    env *= linearstep(.0,.001,t);
-
-    dest+=vec2(.1,.2)*env*sin(3.*sin(800.*t-10.*exp(-100.*t)));
-  }
-
   // rim
   {
-    float t=euclideanRhythmsInteg(10.,16.,time.y*4.*TIME2BEAT-2.)*.25 beat;
+    float t=mod(mod(time.z, 2.75 beat),.5 beat);
 
     float env=exp(-300.*t);
 
-    dest+=.2*env*tanh(4.*(
+    dest+=.24*env*tanh(4.*(
       +tri(t*400.*vec2(.98,.99)-.5*env)
       +tri(t*1500.*vec2(.99,.98)-.5*env)
-    ));
+    ))*vec2(1,-1);
   }
 
   // chord
@@ -206,22 +188,48 @@ vec2 mainAudio(vec4 time){
       vec3 dice=pcg3df(vec3(i));
 
       float delay=floor(dice.x*3.);
-      float t=mod(time.y-.75 beat,2. beat)-delay*.75 beat;
+      float t=mod(time.y-2.75 beat,4. beat)-delay*.75 beat;
 
       float freq=p2f(36.+TRANSPOSE+float(pitchTable[i%3]))*mix(.997,1.003,dice.y);
       float offu=dice.z;
 
       vec2 uv=vec2(.5);
       uv+=.3*exp(-4.*t)*(orbit(freq*t+offu)+.1*orbit(freq*13.*t+offu));
-      float diff=texture(image_fbm,uv).x-.5;
+      float tex=tanh(2.*(texture(image_fbm,uv).x-texture(image_fbm,uv+.1).x));
 
       float ampenv=exp(-3.*max(t-.1,0.));
       ampenv*=linearstep(.0,.001,t);
-      float amp=.24*ampenv*sidechain*exp(-delay);
-      sum+=vec2(amp*diff)*r2d(70.0*dice.z);
+      float amp=.15*ampenv*sidechain*exp(-delay);
+      sum+=vec2(amp*tex)*r2d(70.0*dice.z);
     }
 
     dest+=sum;
+  }
+
+  // riff
+  {
+    vec2 sum=vec2(0);
+    float scale[5]=float[](0.,3.,2.,5.,10.);
+
+    for(int i=0;i<4;i++){
+      float fi=float(i);
+
+      float tp=mod(time.z-fi*.5 beat,8. beat);
+      float t=mod(mod(tp,1.25 beat),.5 beat);
+      float l=mod(tp,1.25 beat)<1. beat?.5 beat:.25 beat;
+      float st=floor((tp-t)*4.*TIME2BEAT+.5);
+
+      float arpseed=fract(.645*st);
+      float pitch=scale[int(10.*arpseed)%5]+12.*floor(2.*arpseed);
+      float freq=p2f(60.+pitch+TRANSPOSE);
+      float phase=freq*t;
+      float env=exp(-20.*t);
+      float dir=mod(st,2.)*2.-1.;
+      vec2 wave=orbit(phase*dir);
+      sum+=env*exp(-fi)*zcross(t,l,1E-3)*wave*r2d(fi+time.z+st);
+    }
+
+    dest+=.2*sidechain*sum;
   }
 
   return tanh(1.5*dest);

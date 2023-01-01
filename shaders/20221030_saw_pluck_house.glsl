@@ -212,11 +212,12 @@ vec2 mainAudio(vec4 time){
 
   // ride
   {
-    float t=mod(time.x-.5 beat,1. beat);
+    float t=mod(time.x,.5 beat);
 
-    float env=exp(-5.*t);
+    float env=exp(-5.*t)*linearstep(0.,.01,.5 beat-t);
 
-    dest+=.06*sidechain*tanh(10.*shotgun(6000.*t,1.,.0)*env);
+    float fm=.3*exp(-20.*t)*sin(TAU*3000.*t);
+    dest+=.06*sidechain*tanh(10.*shotgun(4000.*t+fm,1.6,.0)*env);
   }
 
   // crash

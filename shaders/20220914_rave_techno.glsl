@@ -12,7 +12,6 @@
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
 #define f2p(i) (12.*(log(i)-LN440)/LN2+69.)
-#define fs(i) (fract(sin((i)*114.514)*1919.810))
 #define inrange(x,a,b) ((a)<=(x)&&(x)<(b))
 
 uniform sampler2D image_fbm;
@@ -32,6 +31,28 @@ vec2 orbit( float t ) {
   return vec2( cos( TAU * t ), sin( TAU * t ) );
 }
 
+uvec3 pcg3d( uvec3 v ) {
+  v = v * 1145141919u + 1919810u;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
+  v ^= v >> 16u;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
+  return v;
+}
+
+vec3 pcg3df( vec3 v ) {
+  uvec3 r = pcg3d( floatBitsToUint( v ) );
+  return vec3( r ) / float( 0xffffffffu );
+}
+
+mat2 r2d(float x){
+  float c=cos(x),s=sin(x);
+  return mat2(c, s, -s, c);
+}
+
 bool euclideanRhythms( float pulses, float steps, float i ) {
   float t = mod( i * pulses, steps );
   return t - pulses < 0.0;
@@ -42,17 +63,15 @@ float euclideanRhythmsInteg( float pulses, float steps, float time ) {
   return floor( ( t - pulses ) / pulses ) + 1.0 + fract( time );
 }
 
-vec2 shotgun(float phase,float spread,float snap){
+vec2 shotgun(float t,float spread,float snap){
   vec2 sum=vec2(0);
   for(int i=0;i<64;i++){
-    float fi=float(i);
-    float dice=fs(fi);
+    vec3 dice=pcg3df(vec3(i));
 
-    float partial=exp2(spread*dice);
+    float partial=exp2(spread*dice.x);
     partial=mix(partial,floor(partial+.5),snap);
 
-    vec2 pan=mix(vec2(2,0),vec2(0,2),fs(dice));
-    sum+=sin(TAU*phase*partial+fi)*pan;
+    sum+=vec2(sin(TAU*t*partial))*r2d(TAU*dice.y);
   }
   return sum/64.;
 }
@@ -95,7 +114,7 @@ vec2 mainAudio(vec4 time){
 
     float env=exp(-10.*t);
 
-    dest+=.2*sidechain*tanh(10.*shotgun(3800.0*t,1.6,.2)*env);
+    dest+=.2*sidechain*tanh(10.*shotgun(3000.0*t,2.6,.0)*env);
   }
 
   // clap
@@ -131,7 +150,9 @@ vec2 mainAudio(vec4 time){
   // fm perc
   {
     float t=lofi(mod(time.x,.25 beat),1E-4);
-    vec4 dice=fs(lofi(time.z,.25 beat)+vec4(0,1,2,3));
+    float st=floor(time.z/(.25 beat));
+    vec3 dice=pcg3df(vec3(st));
+
     float freq=mix(200.,1000.,dice.x*dice.x*dice.x*dice.x);
     float decay=mix(50.,10.,dice.y*dice.y);
     float fmamp=mix(10.,100.,dice.z*dice.z);
@@ -153,7 +174,7 @@ vec2 mainAudio(vec4 time){
     float amp=.14*smoothstep(-4. beat,4. beat,time.y);
     dest+=amp*tanh(2.*wave*exp(-20.*t));
   }
-  
+
   // bass
   {
     float t=euclideanRhythmsInteg(5.,16.,time.z*4.*TIME2BEAT-2.)/(4.*TIME2BEAT);
@@ -163,7 +184,7 @@ vec2 mainAudio(vec4 time){
       noteb<16.?3:
       noteb<25.?-2:
       1;
-    
+
     float freq=p2f(TRANSPOSE+float(note+36));
 
     dest+=.4*sidechain*tanh(9.*exp(-10.*t)*sin(TAU*freq*t))*smoothstep(0.,.01,t);
@@ -181,7 +202,7 @@ vec2 mainAudio(vec4 time){
   // rave hit
   {
     vec2 sum = vec2(0.);
-    
+
     int pitchTable[8]=int[](0,3,7,10,12,14,19,22);
     float t=euclideanRhythmsInteg(7.,16.,time.z*4.*TIME2BEAT-2.)/(4.*TIME2BEAT);
 
@@ -191,23 +212,23 @@ vec2 mainAudio(vec4 time){
       noteb<25.?-2:
       1;
 
-    for(int i=0;i<48;i++){
+    for(int i=0;i<96;i++){
       float fi=float(i);
+      vec3 dice=pcg3df(vec3(i));
 
-      float freq=p2f(TRANSPOSE+float(note+48+pitchTable[i%8]))*mix(0.99,1.01,fs(fi));
-      float offu=fs(fi+4.);
-      vec2 pan=mix(vec2(0.,2.),vec2(2.,0.),fi/47.);
+      float freq=p2f(TRANSPOSE+float(note+48+pitchTable[i%8]))*mix(0.99,1.01,dice.x);
+      float offu=dice.y;
 
-      vec2 uv=vec2(1.*t+.01*fi);
+      vec2 uv=vec2(1.*t+.1*fi);
       vec2 uv1=uv+0.1*orbit(freq*t);
       vec2 uv2=uv+0.05*orbit(3.*freq*t);
       vec2 uvm=.1*exp(-10.*t)*orbit(9.*freq*t);
       float diff=texture(image_fbm,uv1+uvm).x-texture(image_fbm,uv2+uvm).x;
 
-      sum+=exp(-3.*t)*pan*diff; // fbm osc
+      sum+=vec2(diff)*r2d(PI*(.5+dice.z)); // fbm osc
     }
 
-    dest+=.34*mix(.5,1.,sidechain)*clip(.5*sum);
+    dest+=.37*mix(.5,1.,sidechain)*tanh(.5*exp(-3.*t)*sum);
   }
 
   return tanh(2.*dest);
