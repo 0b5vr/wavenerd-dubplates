@@ -46,9 +46,26 @@ float envAR( float t, float l, float a, float r ) {
   return envA( t, a ) * linearstep( l, l - r, t );
 }
 
-float euclideanRhythmsInteg(float pulses,float steps,float time){
-  float t=mod(floor(time)*pulses,steps);
-  return floor((t-pulses)/pulses)+1.+fract(time);
+uvec3 pcg3d( uvec3 v ) {
+  v = v * 1145141919u + 1919810u;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
+  v ^= v >> 16u;
+  v.x += v.y * v.z;
+  v.y += v.z * v.x;
+  v.z += v.x * v.y;
+  return v;
+}
+
+vec3 pcg3df( vec3 v ) {
+  uvec3 r = pcg3d( floatBitsToUint( v ) );
+  return vec3( r ) / float( 0xffffffffu );
+}
+
+mat2 r2d(float x){
+  float c=cos(x),s=sin(x);
+  return mat2(c,s,-s,c);
 }
 
 vec2 filterSaw(float freq,float t,float cutoff,float reso){
@@ -90,7 +107,7 @@ vec2 mainAudio(vec4 time){
     float t=kickt;
 
     vec2 uv=orbit(4.2*t)+t;
-    dest+=.5*sidechain*texture(image_fbm,uv).x;
+    dest+=.5*sidechain*(texture(image_fbm,uv).x-.5);
   }
 
   // hihat
@@ -125,14 +142,14 @@ vec2 mainAudio(vec4 time){
 
   // rim
   {
-    float t=euclideanRhythmsInteg(10.,16.,time.y*4.*TIME2BEAT-2.)*.25 beat;
+    float t=mod(mod(mod(time.y-1. beat,2. beat),.75 beat),.5 beat); // .xx. x.xx
 
     float env=exp(-300.*t);
 
     dest+=.2*env*tanh(4.*(
-      +tri(t*400.*vec2(.98,.99)-.5*env)
-      +tri(t*1500.*vec2(.99,.98)-.5*env)
-    ));
+      +tri(t*400.-.5*env)
+      +tri(t*1500.-.5*env)
+    ))*vec2(1,-1);
   }
 
   // noise
@@ -143,35 +160,28 @@ vec2 mainAudio(vec4 time){
 
     float env=exp(-100.0*fract(mod(st,32.)*.631+.5)*t);
 
-    dest+=.2*sidechain*env*tanh(5.*(texture(image_fbm,uv).x-.5))*pan(fs(st+.4)-.5);
+    dest+=.2*sidechain*env*tanh(5.*(texture(image_fbm,uv).xx-.5))*r2d(st+.4);
   }
 
+  // additive shepard
   {
-    seed = 0.199;
+    vec2 sum=vec2(0.);
 
-    for ( int i = 0; i < 50; i ++ ) {
-      float reltone = 1.0 + random() * 4.0;
+    for(int i=0;i<2500;i++){
+      vec3 diceA=pcg3df(vec3(i/50));
+      vec3 diceB=pcg3df(vec3(i));
 
-      float relfreq = pow( 2.0, reltone );
-      float relfreqOt = floor( relfreq + 0.5 );
-      float relfreqH = mix( relfreq, relfreqOt, 0.2 );
-      reltone = log2( relfreqH ) * 12.0;
+      float t=mod(time.z-diceA.x*(64. beat),64. beat);
 
-      float mtone = reltone;
-      float mfreq = 220.0 * pow( 2.0, mtone / 12.0 );
+      float tone=5.+8.*diceA.y+.15*diceB.y;
+      float freq=exp2(tone);
+      vec2 phase=(t+.5*t*t/(64. beat))*freq+fract(diceB.xy*999.);
+      phase+=.1*fract(32.*phase); // add high freq
 
-      for ( int j = 0; j < 50; j ++ ) {
-        float ptone = mtone + random() * 0.5;
-
-        float freq = 220.0 * pow( 2.0, ptone / 12.0 );
-
-        float noisePhase = TAU * fract( freq * time.z * 5.0 );
-        float tt = time.z + pow( time.z / 10.0, 2.0 ) + 0.0001 * sin( TAU / 32.0 * noisePhase );
-
-        vec2 phase = TAU * fract( freq * tt ) + TAU * vec2( random(), random() );
-        dest += 0.001*sidechain*sin( phase );
-      }
+      sum+=sin(TAU*phase)*sin(PI*t/(64. beat))/1000.;
     }
+
+    dest+=1.2*sidechain*sum;
   }
 
   return tanh(2.*dest);
