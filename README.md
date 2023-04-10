@@ -1,5 +1,5 @@
 # wavenerd-dubplates
 
-Examples of [Wavenerd](https://github.com/FMS-Cat/wavenerd/)
+Examples of [Wavenerd](https://0b5vr.com/wavenerd/)
 
 It's embarrassing
