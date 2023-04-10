@@ -99,10 +99,16 @@ vec2 mainAudio( vec4 time ) {
     dest += 0.4 * mix( 0.2, 1.0, sidechain ) * env * wave;
   }
 
+  int prog = 8 * int( time.z / B2T / 8.0 ) % 16;
+  const float[16] chords = float[](
+    -4.,0.,7.,10.,14.,19.,24.,29.,
+    0.,7.,10.,14.,15.,19.,24.,29.
+  );
+
   { // bass
     float t = time.z;
 
-    float freq = p2f( 36.0 );
+    float freq = p2f( 36.0 + chords[ prog ] );
     float phase = t * freq;
     vec2 wave = mix(
       vec2( sin( TAU * phase ) ),
@@ -114,15 +120,15 @@ vec2 mainAudio( vec4 time ) {
 
   { // pad
     float t = time.z;
-    const float[8] chords = float[](0.,7.,10.,14.,15.,19.,24.,29.);
 
     vec2 sum = vec2( 0.0 );
 
     for ( int i = 0; i < 8; i ++ ) {
-      float note = 48.0 + chords[ i ];
+      float note = 48.0 + chords[ i + prog ];
       float freq = p2f( note );
       float phase = t * freq;
       vec2 wave = shotgun( phase, 2.0, 0.94 );
+      wave += 0.5 * shotgun( 3.0 * phase, 2.0, 0.94 );
       sum += mix( 0.2, 1.0, sidechain ) * wave / 4.0;
     }
 

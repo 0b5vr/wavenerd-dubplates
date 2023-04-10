@@ -181,8 +181,9 @@ vec2 mainAudio( vec4 time ) {
       vec3 dice=pcg3df(vec3(i,st,0));
       vec2 dicen=boxMuller(dice.xy);
 
-      const float progs[4]=float[](0.,2.,5.,4.);
-      float prog=progs[st/16];
+      // const float progs[4]=float[](0.,2.,5.,4.);
+      // float prog=progs[st/16];
+      float prog=st<8?1.:0.;
 
       float freq=p2f(48.+prog+TRANSPOSE+note+.02*dicen.y);
       float phase=lofi(freq*t+TAU*dice.z,1./32.);

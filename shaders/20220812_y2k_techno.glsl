@@ -173,14 +173,14 @@ vec2 mainAudio(vec4 time){
 
     dest+=.2*sidechain*tanh(5.*env*(vec2(
       texture(image_fbm,uv).x,
-      texture(image_fbm,uv+.01).x
+      texture(image_fbm,uv+.5).x
     )-.5));
 
     uv=orbit(802.*t)+orbit(4000.*t)*exp(-100.*t)+137.*t;
 
     dest-=.2*sidechain*tanh(5.*env*(vec2(
       texture(image_fbm,uv).x,
-      texture(image_fbm,uv+.01).x
+      texture(image_fbm,uv+.5).x
     )-.5));
   }
 
@@ -209,7 +209,7 @@ vec2 mainAudio(vec4 time){
     float env=exp(-20.*t);
     env*=linearstep(.0,.001,t);
 
-    dest+=vec2(.2,.1)*env*sin(3.*sin(1100.*t-10.*exp(-100.*t)));
+    dest+=vec2(.2,.1)*env*sin(vec2(0.,1.)+3.*sin(1100.*t-10.*exp(-100.*t)));
   }
 
   // tom
@@ -219,7 +219,7 @@ vec2 mainAudio(vec4 time){
     float env=exp(-20.*t);
     env *= linearstep(.0,.001,t);
 
-    dest+=vec2(.1,.2)*env*sin(3.*sin(800.*t-10.*exp(-100.*t)));
+    dest+=vec2(.1,.2)*env*sin(vec2(0.,5.)+3.*sin(800.*t-10.*exp(-100.*t)));
   }
 
   // rim
@@ -231,7 +231,7 @@ vec2 mainAudio(vec4 time){
     dest+=.3*env*tanh(4.*(
       +tri(t*400.*vec2(.98,.99)-.5*env)
       +tri(t*1500.*vec2(.99,.98)-.5*env)
-    ));
+    ))*mat2(0,1,-1,0);
   }
 
   // snare909
@@ -305,7 +305,7 @@ vec2 mainAudio(vec4 time){
     vec2 wave=filterSaw(freq,t,cutoff,.8);
 
     dest+=.2*env*sidechain*tanh(20.*wave);
-  };
+  }
 
   // pad
   {
@@ -330,7 +330,7 @@ vec2 mainAudio(vec4 time){
       wave-=texture(image_fbm,uv+.07).x;
 
       float amp=.2*mix(.3,1.,sidechain)*exp(-5.*t);
-      sum+=amp*vec2(wave)*r2d(TAU*dice.z); // fbm osc
+      sum+=amp*vec2(wave)*r2d(.9*fi); // fbm osc
     }
 
     dest+=clip(sum);

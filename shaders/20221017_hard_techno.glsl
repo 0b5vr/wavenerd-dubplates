@@ -208,7 +208,7 @@ vec2 mainAudio(vec4 time){
     float decay=exp2(5.*fract(st*.428));
     float fmamp=exp2(2.+4.*fract(st*.322+.8));
     float cfreq=300.;
-    vec2 wave=sin(fmamp*sin(fmfreq*t)*exp(-decay*t)+cfreq*t+vec2(0,1));
+    vec2 wave=sin(fmamp*sin(fmfreq*t)*exp(-decay*t)+cfreq*t+vec2(0,2));
     dest+=.13*mix(.5,1.,sidechain)*wave;
   }
 

@@ -195,11 +195,11 @@ vec2 mainAudio(vec4 time){
 
       vec2 uv=vec2(.5);
       uv+=.3*exp(-4.*t)*(orbit(freq*t+offu)+.1*orbit(freq*13.*t+offu));
-      float tex=tanh(2.*(texture(image_fbm,uv).x-texture(image_fbm,uv+.1).x));
+      float tex=tanh(2.*(texture(image_fbm,uv).x-texture(image_fbm,uv+.05).x));
 
       float ampenv=exp(-3.*max(t-.1,0.));
       ampenv*=linearstep(.0,.001,t);
-      float amp=.15*ampenv*sidechain*exp(-delay);
+      float amp=.12*ampenv*mix(.3,1.,sidechain)*exp(-delay);
       sum+=vec2(amp*tex)*r2d(70.0*dice.z);
     }
 
