@@ -1,3 +1,6 @@
+#define b2t (60./bpm)
+#define t2b (1./b2t)
+
 #define saturate(i) clamp(i,0.,1.)
 #define clip(i) clamp(i,-1.,1.)
 #define linearstep(a,b,x) saturate(((x)-(a))/((b)-(a)))
@@ -10,8 +13,6 @@ const float pi=acos(-1.);
 const float tau=2.*pi;
 const float p4=exp2(5./12.);
 const float p5=exp2(7./12.);
-const float b2t=60./140.;
-const float t2b=1./b2t;
 const uint uint_max=0xffffffffu;
 
 uvec3 pcg3d(uvec3 v){
