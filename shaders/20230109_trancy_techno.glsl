@@ -11,6 +11,7 @@
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 #define p2f(i) (pow(2.,((i)-69.)/12.)*440.)
 #define inrange(x,a,b) ((a)<=(x)&&(x)<(b))
+#define repeat(i, n) for(int i = 0; i < n; i ++)
 
 const float TRANSPOSE=2.;
 
@@ -18,8 +19,6 @@ const float PI=acos(-1.);
 const float TAU=2.*PI;
 const float P4=pow(2.,5./12.);
 const float P5=pow(2.,7./12.);
-
-uniform sampler2D image_fbm;
 
 float zcross( float t, float l, float d ) {
   return linearstep( 0.0, d, t ) * linearstep( 0.0, d, l - t );
@@ -70,6 +69,57 @@ vec2 shotgun(float t,float spread,float snap){
     sum+=vec2(sin(TAU*t*partial))*r2d(TAU*dice.y);
   }
   return sum/64.;
+}
+
+vec2 cheapnoise(float t) {
+  uvec3 s=uvec3(t * 256.0);
+  float p=fract(t * 256.0);
+
+  vec3 dice;
+  vec2 v = vec2(0.0);
+
+  dice=vec3(pcg3d(s + 0u)) / float(-1u) - vec3(0.5, 0.5, 0.0);
+  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
+  dice=vec3(pcg3d(s + 1u)) / float(-1u) - vec3(0.5, 0.5, 1.0);
+  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
+  dice=vec3(pcg3d(s + 2u)) / float(-1u) - vec3(0.5, 0.5, 2.0);
+  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
+
+  return 2.0 * v;
+}
+
+vec2 cheapnoiseFBM(float t, float pers, float lacu) {
+  vec3 sum = vec3(0);
+
+  repeat(i, 5) {
+    sum += vec3(cheapnoise(t), 1);
+    sum /= pers;
+    t *= lacu;
+  }
+
+  return sum.xy / sum.z;
+}
+
+mat3 orthBas(vec3 z) {
+  z = normalize(z);
+  vec3 up = abs(z.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(0.0, 0.0, 1.0);
+  vec3 x = normalize(cross(up, z));
+  return mat3(x, cross(z, x), z);
+}
+
+vec3 cyclic(vec3 p, float pers, float lacu) {
+  vec4 sum = vec4(0);
+  mat3 rot = orthBas(vec3(2, -3, 1));
+
+  repeat(i, 5) {
+    p *= rot;
+    p += sin(p.zxy);
+    sum += vec4(cross(cos(p), sin(p.yzx)), 1);
+    sum /= pers;
+    p *= lacu;
+  }
+
+  return sum.xyz / sum.w;
 }
 
 float cheapfiltersaw(float phase,float k){
@@ -125,10 +175,7 @@ vec2 mainAudio( vec4 time ) {
 
     vec2 uv=orbit(87.*t)+20.*t;
 
-    dest+=.23*tanh(20.*env*(vec2(
-      texture(image_fbm,uv).x,
-      texture(image_fbm,uv+.05).x
-    )-.5));
+    dest+=.23*tanh(20.*env*cheapnoiseFBM(12.0 * t, 0.5, 2.0));
   }
 
   // -- ride ---------------------------------------------------------------------------------------
@@ -143,16 +190,12 @@ vec2 mainAudio( vec4 time ) {
     float t=mod(time.x,exp2(-2.-floor(time.y/(2.*b2t)))*b2t);
 
     vec2 uv=orbit(200.*t)+237.*t;
-    vec2 wave=tanh(20.*(vec2(
-      texture(image_fbm,uv).x,
-      texture(image_fbm,uv+.05).x
-    )-.5));
+    vec2 wave=tanh(20.*cheapnoise(30.0 * t));
     wave+=sin(1400.*t-exp(-t*80.)*30.);
 
     float amp=.14*smoothstep(-4.*b2t,4.*b2t,time.y);
     dest+=amp*tanh(2.*wave*exp(-20.*t));
   }
-
 
   // -- crash --------------------------------------------------------------------------------------
   {
@@ -170,12 +213,12 @@ vec2 mainAudio( vec4 time ) {
     float env=linearstep(0.,.001,t)*linearstep(0.,.01,len-t-.1*b2t);
     float phase=p2f(24.+TRANSPOSE)*t;
     vec2 uv=orbit(phase);
-    float wave=mix(
-      tanh(10.*sin(TAU*phase)),
-      tanh(4.-8.*texture(image_fbm,uv).x),
-      0.2
+    vec2 wave=mix(
+      vec2(tanh(10.*sin(TAU*phase))),
+      cyclic(vec3(4.0 * uv, 2.0), 1.0, 2.0).xy,
+      0.4
     );
-    dest+=.4*sidechain*env*wave;
+    dest+=.6*sidechain*env*wave;
   }
 
   // -- chord --------------------------------------------------------------------------------------
@@ -193,12 +236,18 @@ vec2 mainAudio( vec4 time ) {
 
       float freq=p2f(48.+TRANSPOSE+chord[i%8]+.4*(dice.x-.5));
       float phase=freq*t;
-      vec2 uv=.3*orbit(phase)+.01*time.w;
-      float wave=texture(image_fbm,uv).x-texture(image_fbm,uv+.05).x;
+      vec3 p = vec3(
+        0.3 * orbit(phase),
+        0.01 * time.w
+      );
+      vec2 wave = (
+        cyclic(p, 0.5, 2.0)
+        - cyclic(p + 0.05, 0.5, 2.0)
+      ).xy;
       sum+=vec2(wave)*r2d(fi);
     }
 
-    dest+=.1*mix(.2,1.,sidechain)*sum;
+    dest+=.2*mix(.2,1.,sidechain)*sum;
   }
 
   // -- arp ----------------------------------------------------------------------------------------
