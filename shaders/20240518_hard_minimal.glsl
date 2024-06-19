@@ -232,13 +232,13 @@ vec2 mainAudio(vec4 time) {
 
       vec2 wave = vec2(0.0);
       wave = 4.5 * exp(-6.0 * t) * sin(wave + exp2(12.80 + 0.3 * dice.x) * t + dice2.xy);
-      wave = 3.2 * exp(-4.0 * t) * sin(wave + exp2(11.88 + 0.3 * dice.y) * t + dice2.yz);
-      wave = 1.0 * exp(-9.0 * t) * sin(wave + exp2(14.82 + 0.3 * dice.z) * t + dice2.zx);
+      wave = 3.2 * exp(-4.0 * t) * sin(wave + exp2(10.88 + 0.3 * dice.y) * t + dice2.yz);
+      wave = 1.0 * exp(-9.0 * t) * sin(wave + exp2(14.92 + 0.3 * dice.z) * t + dice2.zx);
 
       sum += wave;
     }
 
-    dest += 0.2 * exp(-5.0 * t) * sidechain * tanh(2.0 * sum);
+    dest += 0.14 * exp(-5.0 * t) * sidechain * tanh(2.0 * sum);
   }
 
   { // clap
