@@ -280,7 +280,7 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // crash
-    float t = mod(time.z - 32.0 * B2T, 64.0 * B2T);
+    float t = mod(time.z, 64.0 * B2T);
 
     float env = mix(exp(-t), exp(-10.0 * t), 0.7);
     vec2 wave = shotgun(3800.0 * t, 2.0);

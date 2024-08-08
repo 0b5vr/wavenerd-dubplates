@@ -124,7 +124,10 @@ vec2 mainAudio( vec4 time ) {
 
     {
       float env=linearstep(0.3,0.1,t);
-      // env*=exp(-50.*t); // hi pass like
+
+      // { // hi pass like
+      //   env*=exp(-50.*t);
+      // }
 
       dest+=.5*env*tanh(3.*sin(
         310.*t-20.*exp(-28.*t)
