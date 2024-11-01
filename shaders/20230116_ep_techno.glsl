@@ -1,5 +1,6 @@
-#define b2t (60./bpm)
-#define t2b (1./b2t)
+#define S2T (15.0 / bpm)
+#define B2T (60./bpm)
+#define T2B (1./B2T)
 
 #define saturate(i) clamp(i, 0.,1.)
 #define clip(i) clamp(i, -1.,1.)
@@ -14,6 +15,7 @@
 #define repeat(i, n) for(int i = 0; i < n; i ++)
 
 const float TRANSPOSE=3.;
+const float SWING = 0.58;
 
 const float PI=acos(-1.);
 const float TAU=2.*PI;
@@ -56,6 +58,59 @@ mat2 r2d(float x){
 
 vec2 orbit(float t){
   return vec2(cos(TAU*t),sin(TAU*t));
+}
+
+float t2sSwing(float t) {
+  float st = t / S2T;
+  return 2.0 * floor(st / 2.0) + step(SWING, fract(0.5 * st));
+}
+
+float s2tSwing(float st) {
+  return 2.0 * S2T * (floor(st / 2.0) + SWING * mod(st, 2.0));
+}
+
+vec4 seq16(float t, int seq) {
+  t = mod(t, 16.0 * S2T);
+  int sti = int(t2sSwing(t));
+  int rotated = ((seq >> (15 - sti)) | (seq << (sti + 1))) & 0xffff;
+
+  float prevStepBehind = log2(float(rotated & -rotated));
+  float prevStep = float(sti) - prevStepBehind;
+  float prevTime = s2tSwing(prevStep);
+  float nextStepForward = 16.0 - floor(log2(float(rotated)));
+  float nextStep = float(sti) + nextStepForward;
+  float nextTime = s2tSwing(nextStep);
+
+  return vec4(
+    prevStep,
+    t - prevTime,
+    nextStep,
+    nextTime - t
+  );
+}
+
+vec4 quant(float t, float interval, out float i) {
+  interval = max(interval, 1.0);
+  float st = t2sSwing(t);
+
+  i = floor(floor(st + 1E-4) / interval + 1E-4);
+
+  float prevStep = ceil(i * interval - 1E-4);
+  float prevTime = s2tSwing(prevStep);
+  float nextStep = ceil((i + 1.0) * interval - 1E-4);
+  float nextTime = s2tSwing(nextStep);
+
+  return vec4(
+    prevStep,
+    t - prevTime,
+    nextStep,
+    nextTime - t
+  );
+}
+
+vec4 quant(float t, float interval) {
+  float _;
+  return quant(t, interval, _);
 }
 
 vec2 shotgun(float t,float spread,float snap){
@@ -119,8 +174,8 @@ vec2 mainAudio( vec4 time ) {
   float sidechain;
 
   { // kick
-    float t=kickt=time.x;
-    sidechain=smoothstep(0.,.8*b2t,t);
+    float t = kickt=time.x;
+    sidechain=smoothstep(0.,.8*B2T,t);
 
     {
       float env=linearstep(0.3,0.1,t);
@@ -148,14 +203,16 @@ vec2 mainAudio( vec4 time ) {
   }
 
   { // hihat
-    float t=mod(time.x-.5*b2t,.25*b2t);
-    float st=floor(time.y*4.*t2b);
+    vec4 seq = seq16(time.y, 0xffff);
+    float t=seq.t;
+    float st=floor(time.y*4.*T2B);
     float decay=exp2(7.-3.*fract(.628*st));
     dest+=.2*tanh(8.*shotgun(5400.*t,1.4,.0))*exp(-decay*t);
   }
 
   { // clap
-    float t=mod(time.y-b2t,2.*b2t);
+    vec4 seq = seq16(time.y, 0x0808);
+    float t=seq.t;
     t=lofi(t,1E-4);
 
     float env=mix(
@@ -170,7 +227,8 @@ vec2 mainAudio( vec4 time ) {
   }
 
   { // ride
-    float t=mod(time.y,.5*b2t);
+    vec4 seq = seq16(time.y, 0xaaaa);
+    float t=seq.t;
 
     float env=mix(
       exp(-5.*t),
@@ -194,16 +252,26 @@ vec2 mainAudio( vec4 time ) {
       float chord[7]=float[](0.,2.,3.,7.,9.,10.,14.);
       float note=chord[i%7];
 
-      float tp=mod(time.z-.25*b2t-.5*b2t*delay,16.*b2t);
-      float t=mod(mod(tp,15.5*b2t),.75*b2t);
-      int st=int((tp-t)*t2b*4.+.1);
+      float t = mod(time.z, 64.0 * S2T);
+      float st = mod(t2sSwing(t) - 1.0, 64.0);
+      st = st < 61.0
+        ? lofi(st, 3.0)
+        : lofi(st, 2.0);
+      st += 1.0;
+      st = mod(st, 64.0);
 
-      vec3 dice=pcg3df(vec3(i,st,0));
+      float prog = step(st, 7.0);
+
+      st += 2.0 * delay;
+      st = mod(st, 64.0);
+
+      t = mod(t - s2tSwing(st), 64.0 * S2T);
+      float q = (1.4 * S2T) - t;
+
+      vec3 dice=pcg3df(vec3(i, st, 0));
       vec2 dicen=boxMuller(dice.xy);
 
-      // const float progs[4]=float[](0.,2.,5.,4.);
-      // float prog=progs[st/16];
-      float prog=st<8?1.:0.;
+      float env = exp(-50.0 * max(-q, 0.0));
 
       float freq=p2f(48.+prog+TRANSPOSE+note+.02*dicen.y);
       float phase=lofi(freq*t+TAU*dice.z,1./32.);
@@ -214,13 +282,12 @@ vec2 mainAudio( vec4 time ) {
         +.10*sin(4.*TAU*phase)
       )*vec2(1,-1);
 
-      float env=exp(-50.*max(t-.15,0.));
-      float zc=linearstep(0.,1E-3,t)*linearstep(0.,1E-3,.75*b2t-t);
+      float zc=linearstep(0.,1E-3,t)*linearstep(0.,1E-3,.75*B2T-t);
 
       sum+=zc*env*exp(-2.*delay)*wave*r2d(-3.*delay+0.3*dicen.x);
     }
 
-    dest+=.2*sum;
+    dest += 0.2 * sum;
   }
 
   return tanh(1.5*dest);
