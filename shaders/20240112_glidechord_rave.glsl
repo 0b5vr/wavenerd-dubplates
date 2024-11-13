@@ -3,6 +3,7 @@
 #define S2T (15.0 / bpm)
 #define B2T (60.0 / bpm)
 #define saturate(x) clamp(x, 0., 1.)
+#define clip(x) clamp(x, -1., 1.)
 #define repeat(i, n) for (int i = 0; i < n; i++)
 
 const float PI = acos(-1.0);
@@ -154,7 +155,7 @@ vec2 mainAudio(vec4 time) {
     vec4 seq = seq16(0x8888, time.y, 0.25 * B2T);
     float t = seq.t;
     float q = seq.q;
-    sidechain = 0.2 + 0.8 * smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
+    sidechain = smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
 
     float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
 
@@ -182,9 +183,10 @@ vec2 mainAudio(vec4 time) {
     float note = TRANSPOSE + 24.0;
     float phase = p2f(note) * t;
 
-    float wave = tanh(3.0 * sin(
+    vec2 wave = vec2(sin(TAU * phase));
+    wave += tanh(3.0 * sin(
       TAU * phase
-      + 0.8 * env * sin(200.0 * TAU * exp(-3.0 * t))
+      + 0.8 * env * cis(200.0 * TAU * exp(-3.0 * t))
     ));
 
     dest += 0.4 * env * sidechain * wave;
@@ -197,7 +199,7 @@ vec2 mainAudio(vec4 time) {
     float vel = fract(st * 0.2 + 0.42);
     float env = exp(-exp2(7.0 - 3.0 * vel) * t);
     vec2 wave = shotgun(6000.0 * t, 2.0, 0.0, 0.5);
-    dest += 0.2 * env * sidechain * tanh(8.0 * wave);
+    dest += 0.2 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
   }
 
   { // clap
@@ -235,7 +237,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave;
     }
 
-    dest += 0.07 * env * sidechain * tanh(sum);
+    dest += 0.07 * env * mix(0.2, 1.0, sidechain) * tanh(sum);
   }
 
   { // shaker
@@ -245,7 +247,15 @@ vec2 mainAudio(vec4 time) {
     float vel = fract(st * 0.41 + 0.63);
     float env = smoothstep(0.0, 0.02, t) * exp(-exp2(6.0 - 3.0 * vel) * t);
     vec2 wave = cyclicNoise(vec3(cis(200.0 * t), exp2(8.0 + 3.0 * vel) * t), 0.8).xy;
-    dest += 0.15 * env * sidechain * tanh(2.0 * wave);
+    dest += 0.15 * env * mix(0.3, 1.0, sidechain) * tanh(2.0 * wave);
+  }
+
+  { // crash
+    float t = time.z;
+
+    float env = mix(exp2(-t), exp2(-14.0 * t), 0.7);
+    vec2 wave = shotgun(4000.0 * t, 2.5, 0.0, 0.0);
+    dest += 0.4 * env * mix(0.1, 1.0, sidechain) * tanh(8.0 * wave);
   }
 
   { // pad
@@ -272,5 +282,5 @@ vec2 mainAudio(vec4 time) {
     dest += 0.9 * mix(0.2, 1.0, sidechain) * tanh(sum);
   }
 
-  return tanh(dest);
+  return clip(1.3 * tanh(dest));
 }
