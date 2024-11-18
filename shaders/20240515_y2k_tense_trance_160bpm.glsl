@@ -5,10 +5,11 @@
 
 #define S2T (15.0 / bpm)
 #define B2T (60.0 / bpm)
+#define ZERO min(0, int(bpm))
 #define saturate(i) clamp(i,0.,1.)
 #define linearstep(a,b,x) saturate(((x)-(a))/((b)-(a)))
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
-#define repeat(i, n) for(int i=0; i<(n); i++)
+#define repeat(i, n) for(int i=ZERO; i<(n); i++)
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;

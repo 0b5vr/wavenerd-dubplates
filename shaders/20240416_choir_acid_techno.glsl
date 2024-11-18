@@ -2,9 +2,10 @@
 
 #define S2T (15.0 / bpm)
 #define B2T (60.0 / bpm)
+#define ZERO min(0, int(bpm))
 #define saturate(x) clamp(x, 0., 1.)
 #define lofi(i,m) (floor((i)/(m))*(m))
-#define repeat(i, n) for (int i = 0; i < n; i++)
+#define repeat(i, n) for (int i = ZERO; i < n; i++)
 
 const float LN2 = log(2.0);
 const float PI = acos(-1.0);

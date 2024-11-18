@@ -1,13 +1,14 @@
 #define B2T (60./bpm)
 #define S2T (15./bpm)
 #define T2S (bpm/15.)
+#define ZERO min(0, int(bpm))
 
 #define TRANSPOSE 4.0
 
 #define saturate(x) clamp(x, 0., 1.)
 #define clip(x) clamp(x, -1., 1.)
 #define tri(p) (1.0 - 4.0 * abs(fract(p) - 0.5))
-#define repeat(i, n) for (int i = 0; i < n; i++)
+#define repeat(i, n) for (int i = ZERO; i < n; i++)
 
 const float LN2 = log(2.0);
 const float PI = acos(-1.0);

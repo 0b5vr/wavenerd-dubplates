@@ -1,9 +1,11 @@
+#define ZERO min(0, int(bpm))
+
 #define saturate(x) clamp(x, 0.0, 1.0)
 #define linearstep(a, b, t) saturate(((t)-(a))/((b)-(a)))
 #define lofi(i,m) (floor((i) / (m)) * (m))
 #define p2f(p) (440.0 * pow(2.0, (p - 69.0) / 12.0))
 #define tri(x) (1.0 - 4.0 * abs(fract(x + 0.25) - 0.5))
-#define repeat(i, n) for (int i = 0; i < n; i ++)
+#define repeat(i, n) for (int i = ZERO; i < n; i ++)
 
 #define B2T (60.0 / bpm)
 

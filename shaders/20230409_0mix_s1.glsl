@@ -1,5 +1,6 @@
 #define b2t (60./bpm)
 #define t2b (1./b2t)
+#define zero min(0, int(bpm))
 
 #define saturate(i) clamp(i,0.,1.)
 #define clip(i) clamp(i,-1.,1.)
@@ -7,7 +8,7 @@
 #define lofi(i,m) (floor((i)/(m))*(m))
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
-#define repeat(i,n) for(int i=0;i<(n);i++)
+#define repeat(i,n) for(int i=zero;i<(n);i++)
 
 const float pi=acos(-1.);
 const float tau=2.*pi;

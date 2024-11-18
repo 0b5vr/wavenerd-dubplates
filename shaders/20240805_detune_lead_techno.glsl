@@ -2,11 +2,12 @@
 
 #define S2T (15.0 / bpm)
 #define B2T (60.0 / bpm)
+#define ZERO min(0, int(bpm))
 #define saturate(x) clamp(x, 0., 1.)
 #define linearstep(a,b,x) saturate(((x)-(a))/((b)-(a)))
 #define clip(i) clamp(i, -1., 1.)
 #define lofi(i,m) (floor((i) / (m)) * (m))
-#define repeat(i, n) for (int i = 0; i < n; i++)
+#define repeat(i, n) for (int i = ZERO; i < n; i++)
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 
 const float SWING = 0.5;

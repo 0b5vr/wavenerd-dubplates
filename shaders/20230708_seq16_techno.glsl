@@ -1,11 +1,12 @@
 #define BPM bpm
+#define ZERO min(0, int(bpm))
 
 #define B2T (60.0 / bpm)
 #define p2f(i) (exp2(((i)-69.0) / 12.0) * 440.0)
 #define screen(a, b) (1.0 - (1.0 - (a)) * (1.0 - (b)))
 #define saturate(i) clamp(i, 0.0, 1.0)
 #define linearstep(a, b, x) saturate(((x) - (a)) / ((b) - (a)))
-#define repeat(i, n) for (int i = 0; i < (n); i++)
+#define repeat(i, n) for (int i = ZERO; i < (n); i++)
 
 const float TRANSPOSE = 4.0;
 

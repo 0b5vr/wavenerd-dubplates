@@ -1,6 +1,7 @@
 #define S2T (15.0 / bpm)
 #define B2T (60./bpm)
 #define T2B (1./B2T)
+#define ZERO min(0, int(bpm))
 
 #define saturate(i) clamp(i, 0.,1.)
 #define clip(i) clamp(i, -1.,1.)
@@ -12,7 +13,7 @@
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 #define p2f(i) (pow(2.,((i)-69.)/12.)*440.)
 #define inrange(x,a,b) ((a)<=(x)&&(x)<(b))
-#define repeat(i, n) for(int i = 0; i < n; i ++)
+#define repeat(i, n) for(int i = ZERO; i < n; i ++)
 
 const float TRANSPOSE=3.;
 const float SWING = 0.58;

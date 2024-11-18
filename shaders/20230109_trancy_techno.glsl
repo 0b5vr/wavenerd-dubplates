@@ -1,5 +1,6 @@
 #define b2t (60./bpm)
 #define t2b (1./b2t)
+#define zero min(0, int(bpm))
 
 #define saturate(i) clamp(i, 0.,1.)
 #define clip(i) clamp(i, -1.,1.)
@@ -11,7 +12,7 @@
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 #define p2f(i) (pow(2.,((i)-69.)/12.)*440.)
 #define inrange(x,a,b) ((a)<=(x)&&(x)<(b))
-#define repeat(i, n) for(int i = 0; i < n; i ++)
+#define repeat(i, n) for(int i = zero; i < n; i ++)
 
 const float TRANSPOSE=2.;
 
