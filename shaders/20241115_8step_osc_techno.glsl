@@ -359,5 +359,26 @@ vec2 mainAudio(vec4 time) {
     dest += 0.1 * mix(0.2, 1.0, sidechain) * sum;
   }
 
+  { // oidos drone
+    vec2 sum=vec2(0.0);
+
+    repeat(i, 2500) {
+      vec3 diceA = hash3f(vec3(i / 50) + vec3(38, 68, 36));
+      vec3 diceB = hash3f(vec3(i));
+
+      float t = mod(time.z - diceA.x * (64.0 * B2T), 64.0 * B2T);
+      float env = sin(PI * t / (64.0 * B2T));
+
+      float tone = 8.0 + 8.0 * diceA.y + 0.06 * diceB.y;
+      float freq = exp2(tone);
+      vec2 phase = t * freq + fract(diceB.xy * 999.0);
+      phase += 0.1 * fract(32.0 * phase); // add high freq
+
+      sum += sin(TAU * phase) * env / 1000.0;
+    }
+
+    dest += 1.0 * mix(0.2, 1.0, sidechain) * sum;
+  }
+
   return clip(1.3 * tanh(dest));
 }
