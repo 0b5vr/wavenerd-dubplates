@@ -72,7 +72,7 @@ float s2tSwing(float st) {
 
 vec4 seq16(float t, int seq) {
   t = mod(t, 16.0 * S2T);
-  int sti = int(t2sSwing(t));
+  int sti = clamp(int(t2sSwing(t)), 0, 15);
   int rotated = ((seq >> (15 - sti)) | (seq << (sti + 1))) & 0xffff;
 
   float prevStepBehind = log2(float(rotated & -rotated));
