@@ -107,32 +107,6 @@ vec2 cheapnoise(float t) {
   return 2.0 * v;
 }
 
-vec2 ladderLPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 4.0 * reso + omegaSq * omegaSq - 6.0 * omegaSq + 1.0;
-  float b = 4.0 * omega * (omegaSq - 1.0);
-
-  return vec2(
-    1.0 / sqrt(a * a + b * b),
-    atan(a, b)
-  );
-}
-
-vec2 twoPoleHPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 2.0 * (1.0 - reso) * omega;
-  float b = omegaSq - 1.0;
-
-  return vec2(
-    omegaSq / sqrt(a * a + b * b),
-    atan(a, b)
-  );
-}
-
 vec4 seq16( int seq, float t, float tps ) {
   int sti = int( t / tps ) & 15;
   int rotated = ( ( seq >> ( 15 - sti ) ) | ( seq << ( sti + 1 ) ) ) & 0xffff;
