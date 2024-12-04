@@ -52,6 +52,13 @@ vec2 boxMuller(vec2 xi) {
   return r * cis(TAU * t);
 }
 
+float tmod(vec4 time, float d) {
+  vec4 t = mod(time, timeLength);
+  float offset = lofi(t.z - t.x + timeLength.x / 2.0, timeLength.x);
+  offset -= lofi(t.z, d);
+  return t.x + offset;
+}
+
 float t2sSwing(float t) {
   float st = 4.0 * t / B2T;
   return 2.0 * floor(st / 2.0) + step(SWING, fract(0.5 * st));
@@ -194,7 +201,7 @@ vec2 mainAudio(vec4 time) {
     float vel = fract(seq.s * 0.611);
     float env = exp2(-exp2(6.0 - 1.0 * vel) * t);
     vec2 wave = shotgun(6000.0 * t, 2.0, 0.0, 0.0);
-    dest += 0.1 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
+    dest += 0.2 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
   }
 
   { // open hihat
@@ -222,7 +229,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave;
     }
 
-    dest += 0.2 * env * mix(0.2, 1.0, sidechain) * tanh(2.0 * sum);
+    dest += 0.24 * env * mix(0.2, 1.0, sidechain) * tanh(2.0 * sum);
   }
 
   { // shaker
@@ -233,18 +240,7 @@ vec2 mainAudio(vec4 time) {
     float env = smoothstep(0.0, 0.02, t) * exp2(-exp2(6.0 - vel) * t);
     float pitch = exp2(11.4 + 0.3 * vel);
     vec2 wave = shotgun(pitch * t, 1.0, 0.2, 2.0);
-    dest += 0.1 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
-  }
-
-  { // shaker
-    vec4 seq = seq16(time.y, 0xffff);
-    float t = seq.t;
-
-    float vel = fract(0.62 * seq.s);
-    float env = smoothstep(0.0, 0.02, t) * exp2(-exp2(6.0 - vel) * t);
-    float pitch = exp2(11.4 + 0.3 * vel);
-    vec2 wave = shotgun(pitch * t, 1.0, 0.2, 2.0);
-    dest += 0.1 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
+    dest += 0.2 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
   }
 
   { // ride
@@ -295,20 +291,20 @@ vec2 mainAudio(vec4 time) {
     vec2 sum = vec2(0.0);
 
     int STEPS = 8;
-    float seqp[8] = float[](0.47, 0.73, 0.21, 1.00, 0.02, 0.86, 0.89, 0.23);
-    float seqm[8] = float[](0.51, 0.52, 0.12, 0.15, 0.31, 0.72, 0.93, 0.48);
-    float seqe[8] = float[](0.40, 0.70, 0.20, 0.90, 0.10, 0.50, 0.80, 0.20);
+    float seqp[] = float[](0.47, 0.73, 0.21, 1.00, 0.02, 0.86, 0.89, 0.23);
+    float seqm[] = float[](0.51, 0.52, 0.12, 0.15, 0.31, 0.72, 0.93, 0.48);
+    float seqe[] = float[](0.40, 0.70, 0.20, 0.90, 0.10, 0.50, 0.80, 0.20);
 
     repeat(i, 3) {
       float fi = float(i);
       float delayoff = 2.0 * S2T * fi;
       float delaydecay = exp2(-2.0 * fi);
 
-      vec4 seq = seq16(time.y - delayoff, 0xffff);
-      float t = max(seq.t, 0.0); // to prevent clicking noise. issue of seq16?
+      vec4 seq = seq16(tmod(time - delayoff, float(STEPS) * S2T), 0xffff);
+      float t = seq.t;
       float q = seq.q;
 
-      int si = (int(seq.s) + 16 * int((time.z - delayoff) / 16.0 / S2T)) % STEPS;
+      int si = int(seq.s) % STEPS;
       int sip = (si + STEPS - 1) % STEPS;
 
       float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
@@ -330,7 +326,7 @@ vec2 mainAudio(vec4 time) {
       sum += delaydecay * env * tanh(4.0 * wave);
     }
 
-    dest += 0.1 * mix(0.2, 1.0, sidechain) * sum;
+    dest += 0.14 * mix(0.2, 1.0, sidechain) * sum;
   }
 
   { // oidos drone
