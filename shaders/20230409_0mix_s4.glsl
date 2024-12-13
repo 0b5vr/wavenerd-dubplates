@@ -1,3 +1,5 @@
+#define transpose -6.0
+
 #define b2t (60./bpm)
 #define t2b (1./b2t)
 #define zero min(0, int(bpm))
@@ -111,7 +113,7 @@ vec2 mainAudio(vec4 time){
 
   float sidechain=1.;
 
-  float trans=mod(time.z,16.*b2t)<(12.*b2t)?0.:-2.;
+  float trans=transpose+(mod(time.z,16.*b2t)<(12.*b2t)?0.:-2.);
 
   { // kick
     float t=time.x;
@@ -133,7 +135,7 @@ vec2 mainAudio(vec4 time){
 
     float env=exp(-10.*t);
 
-    float note=30.+trans;
+    float note=36.+trans;
     float freq=p2f(note);
     vec2 sum=env*vec2(tanh(sin(tau*freq*t)));
 
@@ -198,7 +200,7 @@ vec2 mainAudio(vec4 time){
       float st=mod(floor((time.z-.75*b2t*fi)/(.25*b2t)),256.);
 
       float arpseed=fract(.615*st);
-      float note=42.+chord[int(arpseed*24.)%8]+12.*floor(arpseed*3.)+trans;
+      float note=48.+chord[int(arpseed*24.)%8]+12.*floor(arpseed*3.)+trans;
       float freq=p2f(note);
       vec2 phase=t*freq+vec2(.5,0);
 
@@ -225,7 +227,7 @@ vec2 mainAudio(vec4 time){
 
       float t=time.z;
 
-      float note=42.+float(pitchTable[i%8])+trans+.1*boxmuller(dice.xy).x;
+      float note=48.+float(pitchTable[i%8])+trans+.1*boxmuller(dice.xy).x;
       float freq=p2f(note);
       float phase=freq*t+dice.z;
 
