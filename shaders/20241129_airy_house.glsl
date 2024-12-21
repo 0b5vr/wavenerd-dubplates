@@ -438,7 +438,7 @@ vec2 mainAudio(vec4 time) {
       float t0 = tmod(time - 0.5 * B2T * iDelay, 10.0 / 4.0 * B2T);
       float seqi;
       vec4 seq = quant(t0, 2.5, seqi);
-      int inote = int(seqi) % N_NOTES;
+      int inote = clamp(int(seqi), 0, N_NOTES - 1);
       float t = seq.t;
       float q = seq.q;
 
