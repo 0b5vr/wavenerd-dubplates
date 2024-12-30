@@ -222,7 +222,7 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // crash
-    float t = time.w;
+    float t = time.z;
 
     float env = mix(exp(-t), exp(-10.0 * t), 0.7);
     vec2 wave = shotgun(3800.0 * t, 2.0, 0.0, 3.0);
