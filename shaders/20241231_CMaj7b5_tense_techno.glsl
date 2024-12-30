@@ -11,7 +11,7 @@
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
 
-const float SWING = 0.5;
+const float SWING = 0.51;
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
@@ -268,8 +268,9 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // shaker
-    float t = mod(time.x, S2T);
-    float st = mod(floor(time.y / S2T), 8.0);
+    vec4 seq = seq16(time.x, 0xffff);
+    float t = seq.t;
+    float st = seq.s;
 
     float vel = fract(st * 0.58 + 0.13);
     float env = smoothstep(0.0, 0.02, t) * exp(-40.0 * exp2(-1.0 * vel) * t);
@@ -361,8 +362,8 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // beep
-    float l = 3.0 * S2T;
-    float t = tmod(time, l);
+    vec4 seq = quant(tmod(time, 6.0 * S2T), 3.0);
+    float t = seq.t;
     float q = S2T - t;
 
     float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
@@ -413,10 +414,11 @@ vec2 mainAudio(vec4 time) {
       float fiDelay = float(iDelay);
       float offset = -2.0 * S2T * fiDelay;
 
-      float l = S2T;
-      float t = tmod(time + offset, l);
-      float q = l - t;
-      int ip = int(mod((time.z - offset) / S2T, float(N_PATTERN)));
+      vec4 seq = quant(time.y + offset, 1.0);
+      float t = seq.t;
+      float q = seq.q;
+      float st = seq.s + 16.0 * floor((time.z - offset) / 4.0 * B2T);
+      int ip = int(mod(st, float(N_PATTERN)));
 
       float env = smoothstep(0.0, 0.004, t) * smoothstep(0.0, 0.004, q);
       env *= exp2(-1.0 * t);
