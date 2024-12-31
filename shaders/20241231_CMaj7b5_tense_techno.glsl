@@ -417,7 +417,7 @@ vec2 mainAudio(vec4 time) {
       vec4 seq = quant(time.y + offset, 1.0);
       float t = seq.t;
       float q = seq.q;
-      float st = seq.s + 16.0 * floor((time.z - offset) / 4.0 * B2T);
+      float st = seq.s + 16.0 * floor((time.z - offset) / (4.0 * B2T));
       int ip = int(mod(st, float(N_PATTERN)));
 
       float env = smoothstep(0.0, 0.004, t) * smoothstep(0.0, 0.004, q);
