@@ -305,7 +305,7 @@ vec2 mainAudio(vec4 time) {
       vec3 dice2 = hash3f(dice);
 
       vec2 wave = vec2(0.0);
-      wave = 2.9 * exp(-1.0 * t) * sin(wave + exp2(13.70 + 0.4 * dice.x) * t + dice2.xy);
+      wave = 2.9 * exp(-1.0 * t) * sin(wave + exp2(13.20 + 0.4 * dice.x) * t + dice2.xy);
       wave = 2.8 * exp(-1.0 * t) * sin(wave + exp2(14.67 + 0.4 * dice.y) * t + dice2.yz);
       wave = 1.0 * sin(wave + exp2(14.09 + 0.5 * dice.z) * t + dice2.zx);
 
@@ -349,7 +349,7 @@ vec2 mainAudio(vec4 time) {
     dest += 0.2 * env * mix(0.3, 1.0, duck) * vec2(wave) * rotate2D(seq.s);
   }
 
-  { // noise
+  { // fill noise
     float l = 32.0 * S2T;
     float t = time.z;
     float q = l - t;
@@ -410,21 +410,22 @@ vec2 mainAudio(vec4 time) {
     int PATTERN[] = int[](0, 6, 3, 14, 10);
 
     vec2 sum = vec2(0.0);
-    repeat(iDelay, 3) {
+    repeat(iDelay, 5) {
       float fiDelay = float(iDelay);
-      float offset = -2.0 * S2T * fiDelay;
+      float delaydecay = exp2(-0.4 * fiDelay - 1.0 * step(1.0, fiDelay));
+      float offset = -2.4 * S2T * fiDelay;
 
-      vec4 seq = quant(time.y + offset, 1.0);
+      vec4 seq = seq16(time.y + offset, 0xffff);
       float t = seq.t;
       float q = seq.q;
-      float st = seq.s + 16.0 * floor((time.z - offset) / (4.0 * B2T));
+      float st = seq.s + 16.0 * floor(tmod(time + offset, timeLength.z) / (4.0 * B2T));
       int ip = int(mod(st, float(N_PATTERN)));
 
       float env = smoothstep(0.0, 0.004, t) * smoothstep(0.0, 0.004, q);
       env *= exp2(-1.0 * t);
 
       float fenv = exp2(-8.0 * t);
-      float lpfcut = 200.0 * exp2(6.0 * fenv - 0.5 * fiDelay);
+      float lpfcut = 200.0 * exp2(6.0 * fenv - 0.4 * fiDelay);
       float hpfcut = 700.0 * exp2(0.3 * fiDelay);
 
       vec2 sumn = vec2(0.0);
@@ -446,15 +447,15 @@ vec2 mainAudio(vec4 time) {
           amp *= lpf.x * hpf.x;
           phase += lpf.y + hpf.y;
 
-          vec2 wave = cis(phase) * rotate2D(TAU * dice.y + time.z);
+          vec2 wave = cis(phase) * rotate2D(st);
           sumn += amp * wave;
         }
       }
 
-      sum += env * sumn * exp2(-0.8 * fiDelay);
+      sum += env * sumn * delaydecay;
     }
 
-    dest += 0.4 * mix(0.3, 1.0, duck) * sum;
+    dest += 0.4 * mix(0.4, 1.0, duck) * sum;
   }
 
   return clip(1.3 * tanh(dest));
