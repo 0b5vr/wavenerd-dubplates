@@ -20,7 +20,7 @@ const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob0;
+uniform vec4 param_knob0; // wavefold on osc
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
