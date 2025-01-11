@@ -17,9 +17,7 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob0;
-
-#define p0 paramFetch(param_knob0)
+uniform vec4 param_knob0; // pluck envelope
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -414,7 +412,7 @@ vec2 mainAudio(vec4 time) {
       vec2 phase = (t * freq) * exp(0.001 * dicen.xy);
       phase += dice.xy;
 
-      float kfenv = exp2(4.0 * (1.0 - p0));
+      float kfenv = exp2(4.0 * (1.0 - paramFetch(param_knob0)));
       float fenv = mix(0.5, 1.0, exp2(-kfenv * t)) * exp(-0.1 * iDelay);
       vec2 wave = vec2(cheapFilterSaw(phase, fenv));
 
