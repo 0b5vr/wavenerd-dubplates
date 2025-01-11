@@ -16,6 +16,9 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float P5 = pow(2.0, 7.0 / 12.0);
 
+uniform vec4 param_knob0;
+uniform vec4 param_knob1;
+
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
   v.x += v.y * v.z;
@@ -366,11 +369,13 @@ vec2 mainAudio(vec4 time) {
     q -= mix(0.01, 0.15 * B2T, fract(seqi * 0.389));
     float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
 
-    float cutoff = 5.0;
-    cutoff += 6.0 * smoothstep(0.0, 0.01, t) * exp(-8.0 * t);
+    float cutoff = 8.0;
+    // cutoff += -3.0 + 6.0 * paramFetch(param_knob0);
+    cutoff += 2.0 * smoothstep(0.0, 0.01, t) * exp(-8.0 * t);
     cutoff += 2.0 * fract(seqi * 0.612);
     float cfreq = exp2(cutoff);
-    float reso = 0.2;
+    float reso = 0.7;
+    // reso = paramFetch(param_knob1);
 
     float pitch = 36.0 + TRANSPOSE + float(NOTES[int(seqi) % N_NOTES]);
     float basefreq = p2f(pitch);
