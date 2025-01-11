@@ -20,6 +20,9 @@ const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
+uniform vec4 param_knob0; // pseudo high-pass on kick
+uniform vec4 param_knob1; // kick fill-in at 16th bar
+
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
   v.x += v.y * v.z;
@@ -137,7 +140,7 @@ vec2 cheapnoise(float t) {
   return 2.0 * v;
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
   float duck = 1.0;
 
@@ -147,16 +150,21 @@ vec2 mainAudio(vec4 time) {
     -5, 2, 7, 9, 10, 12, 14, 17
   );
 
+  bool fill = param_knob1.x > 0.5 && time.z > 63.5 * B2T;
+
   { // kick
     float t = time.x;
     float q = B2T - t;
+
+    if (fill) {
+      t = mod(t, 0.5 * B2T);
+      q = 0.5 * B2T - t;
+    }
+    
     duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
     float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
-
-    // {
-    //   env *= exp(-70.0 * t);
-    // }
+    env *= mix(1.0, exp(-70.0 * t), paramFetch(param_knob0));
 
     {
       float wave = sin(TAU * (
@@ -167,6 +175,10 @@ vec2 mainAudio(vec4 time) {
       ));
       dest += 0.6 * tanh(2.0 * env * wave);
     }
+  }
+
+  if (fill) {
+    return dest;
   }
 
   { // bass
@@ -388,5 +400,10 @@ vec2 mainAudio(vec4 time) {
     dest += 0.09 * mix(0.3, 1.0, duck) * sum;
   }
 
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
   return clip(1.3 * tanh(dest));
 }
