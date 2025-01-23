@@ -20,8 +20,7 @@ const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob0; // pseudo high-pass on kick
-uniform vec4 param_knob1; // kick fill-in at 16th bar
+uniform vec4 param_knob0; // kick fill-in at 16th bar
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -150,13 +149,13 @@ vec2 mainAudioDry(vec4 time) {
     -5, 2, 7, 9, 10, 12, 14, 17
   );
 
-  bool fill = param_knob1.x > 0.5 && time.z > 63.5 * B2T;
+  bool fillIn = param_knob0.x > 0.5 && time.z > 63.5 * B2T;
 
   { // kick
     float t = time.x;
     float q = B2T - t;
 
-    if (fill) {
+    if (fillIn) {
       t = mod(t, 0.5 * B2T);
       q = 0.5 * B2T - t;
     }
@@ -164,7 +163,10 @@ vec2 mainAudioDry(vec4 time) {
     duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
     float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
-    env *= mix(1.0, exp(-70.0 * t), paramFetch(param_knob0));
+
+    // if (!fillIn) { // high-pass like
+    //   env *= exp(-70.0 * t);
+    // }
 
     {
       float wave = sin(TAU * (
@@ -177,7 +179,7 @@ vec2 mainAudioDry(vec4 time) {
     }
   }
 
-  if (fill) {
+  if (fillIn) {
     return dest;
   }
 

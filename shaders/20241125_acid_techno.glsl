@@ -1,3 +1,5 @@
+#pragma use_binary_literals
+
 #define TRANSPOSE 3.0
 
 #define S2T (15.0 / bpm)
@@ -180,7 +182,7 @@ vec2 mainAudio(vec4 time) {
   float duck = smoothstep(0.0, 0.4, time.x) * smoothstep(0.0, 0.001, B2T - time.x);
 
   { // kick
-    vec4 seq = seq16(time.y, 0x8888);
+    vec4 seq = seq16(time.y, 0b1000100010001000);
     float t = seq.t;
     float q = seq.q;
     duck = min(
@@ -209,7 +211,7 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // hihat
-    vec4 seq = seq16(time.y, 0xffff);
+    vec4 seq = seq16(time.y, 0b1111111111111111);
     float t = seq.y;
 
     float envseq[] = float[](
@@ -239,7 +241,7 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // clap
-    vec4 seq = seq16(time.y, 0x2001);
+    vec4 seq = seq16(time.y, 0b0010000000000001);
     float t = seq.y;
     float q = seq.w;
 
@@ -257,7 +259,7 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // snare909
-    vec4 seq = seq16(time.y, 0x2543);
+    vec4 seq = seq16(time.y, 0b0010010101000011);
     float t = seq.t;
     float q = seq.q;
 
@@ -274,7 +276,7 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // hi tom
-    vec4 seq = seq16(time.y, 0x1050);
+    vec4 seq = seq16(time.y, 0b0001000001010000);
     float t = seq.y;
     float q = seq.w;
 
@@ -294,7 +296,7 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // low tom
-    vec4 seq = seq16(time.y, 0x0202);
+    vec4 seq = seq16(time.y, 0b0000001000000010);
     float t = seq.y;
     float q = seq.w;
 
@@ -314,7 +316,7 @@ vec2 mainAudio(vec4 time) {
   }
 
   { // rim
-    vec4 seq = seq16(time.y, 0xd6d7);
+    vec4 seq = seq16(time.y, 0b1101011011010111);
     float t = seq.y;
 
     float env = step(0.0, t) * exp2(-400.0 * t);

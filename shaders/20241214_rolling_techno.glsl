@@ -285,7 +285,7 @@ vec2 mainAudio(vec4 time) {
 
     float env = exp(-50.0 * t) * smoothstep(0.0, 0.01, q);
     vec2 wave = shotgun(3200.0 * t, 1.8, 0.0, 2.0);
-    dest += 0.15 * env * mix(0.1, 1.0, duck) * tanh(8.0 * wave);
+    dest += 0.23 * env * mix(0.1, 1.0, duck) * tanh(8.0 * wave);
   }
 
   { // open hihat
@@ -313,7 +313,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave / 4.0;
     }
 
-    dest += 0.3 * mix(0.2, 1.0, duck) * env * tanh(2.0 * sum);
+    dest += 0.35 * mix(0.2, 1.0, duck) * env * tanh(2.0 * sum);
   }
 
   { // shaker
@@ -336,7 +336,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave / 4.0;
     }
 
-    dest += 0.2 * env * duck * tanh(2.0 * sum);
+    dest += 0.3 * env * duck * tanh(2.0 * sum);
   }
 
   { // clap
@@ -350,20 +350,21 @@ vec2 mainAudio(vec4 time) {
 
       float env = mix(
         mix(
-          exp2(-exp2(mix(4.5, 5.5, modDelay)) * t),
+          exp2(-exp2(mix(4.0, 5.0, modDelay)) * t),
           exp2(-400.0 * mod(t, 0.014)),
           exp2(-180.0 * max(0.0, t - 0.02))
         ),
         exp(-t),
         0.002
       );
+      env *= smoothstep(0.0, exp2(mix(-5.0, -10.0, modDelay)), t);
 
-      vec2 wave = cyclic(vec3(4.0 * cis(1700.0 * t), 1140.0 * t), mix(0.9, 0.5, modDelay), 4.0).xy;
+      vec2 wave = cyclic(vec3(4.0 * cis(1700.0 * t), 1250.0 * t), mix(0.9, 0.5, modDelay), 4.0).xy;
 
       sum += modDelay * tanh(20.0 * env * wave);
     }
 
-    dest += 0.16 * mix(0.7, 1.0, duck) * sum;
+    dest += 0.2 * mix(0.5, 1.0, duck) * sum;
   }
 
   { // ride
@@ -426,6 +427,7 @@ vec2 mainAudio(vec4 time) {
         float freq = 140.0 * p;
 
         vec2 phase = vec2(t * freq);
+
         vec2 lpf = ladderLPF(freq, cutoff, 0.2);
         vec2 hpf = twoPoleHPF(freq, mix(2400.0, 800.0, modDelay), 0.0);
 
@@ -436,7 +438,7 @@ vec2 mainAudio(vec4 time) {
       sum += modDelay * tanh(5.0 * sump * am);
     }
 
-    dest += 0.32 * mix(0.1, 1.0, duck) * sum;
+    dest += 0.38 * mix(0.1, 1.0, duck) * sum;
   }
 
   return clip(1.3 * tanh(dest));
