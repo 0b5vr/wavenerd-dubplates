@@ -190,7 +190,7 @@ vec2 mainAudio(vec4 time) {
         - 4.0 * exp2(-t * 500.0)
         - 0.04 * sin(120.0 * t)
       ));
-      dest += 0.6 * tanh(2.0 * env * wave);
+      dest += 0.5 * tanh(2.0 * env * wave);
     }
   }
 
@@ -212,7 +212,7 @@ vec2 mainAudio(vec4 time) {
     vec2 sum = vec2(0.0);
 
     float env = linearstep(0.0, 0.01, q) * mix(
-      exp2(-70.0 * t),
+      exp2(-40.0 * t),
       exp2(-1.0 * t),
       0.02
     );
@@ -229,7 +229,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave;
     }
 
-    dest += 0.24 * env * mix(0.2, 1.0, sidechain) * tanh(2.0 * sum);
+    dest += 0.2 * env * mix(0.2, 1.0, sidechain) * tanh(2.0 * sum);
   }
 
   { // shaker
@@ -240,7 +240,7 @@ vec2 mainAudio(vec4 time) {
     float env = smoothstep(0.0, 0.02, t) * exp2(-exp2(6.0 - vel) * t);
     float pitch = exp2(11.4 + 0.3 * vel);
     vec2 wave = shotgun(pitch * t, 1.0, 0.2, 2.0);
-    dest += 0.2 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
+    dest += 0.3 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
   }
 
   { // ride
@@ -277,14 +277,22 @@ vec2 mainAudio(vec4 time) {
       0.01
     );
 
-    float freq = 1320.0;
-    vec2 phase = vec2(0.0);
-    phase += t * freq;
-    phase -= 0.04 * fract(11.0 * phase);
-    phase += exp2(-t) * sin(TAU * 0.822 * phase);
-    vec2 wave = sin(TAU * phase);
+    vec2 sum = vec2(0.0);
+    repeat(i, 4) {
+      vec3 dice = hash3f(vec3(i, 48, 29));
 
-    dest += 0.1 * sidechain * tanh(2.0 * env * wave);
+      float freq = 1220.0 * exp2(0.02 * dice.x);
+      vec2 phase = dice.yz;
+      phase += t * freq;
+      phase -= 0.04 * fract(17.0 * phase);
+      phase += exp2(-t) * sin(TAU * 1.582 * phase);
+
+      vec2 wave = sin(TAU * phase);
+      wave = tanh(2.0 * env * wave);
+      sum += wave / 4.0;
+    }
+
+    dest += 0.2 * sidechain * sum;
   }
 
   { // modshit
@@ -326,7 +334,7 @@ vec2 mainAudio(vec4 time) {
       sum += delaydecay * env * tanh(4.0 * wave);
     }
 
-    dest += 0.14 * mix(0.2, 1.0, sidechain) * sum;
+    dest += 0.2 * mix(0.2, 1.0, sidechain) * sum;
   }
 
   { // oidos drone
@@ -344,7 +352,7 @@ vec2 mainAudio(vec4 time) {
       vec2 phase = t * freq + fract(diceB.xy * 999.0);
       phase += 0.1 * fract(32.0 * phase); // add high freq
 
-      sum += sin(TAU * phase) * env / 1000.0;
+      sum += sin(TAU * phase) * env / 2000.0;
     }
 
     dest += 1.0 * mix(0.2, 1.0, sidechain) * sum;

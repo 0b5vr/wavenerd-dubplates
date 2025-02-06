@@ -164,7 +164,7 @@ vec2 mainAudio(vec4 time) {
       - 3.5 * exp2(-tt * 90.0)
       - 2.0 * exp2(-tt * 300.0)
     ));
-    dest += 0.6 * tanh(2.7 * env * wave);
+    dest += 0.5 * tanh(2.7 * env * wave);
   }
 
   { // bass
@@ -181,7 +181,7 @@ vec2 mainAudio(vec4 time) {
     phase += 0.1 * exp(-10.0 * t) * cis(3.0 * TAU * freq * t + time.z);
     vec2 wave = vec2(sin(TAU * phase));
 
-    dest += 0.6 * sidechain * env * wave;
+    dest += 0.4 * sidechain * env * wave;
   }
 
   { // hihat
@@ -191,7 +191,7 @@ vec2 mainAudio(vec4 time) {
     float vel = fract(seq.s * 0.611);
     float env = exp2(-exp2(7.0 - 1.0 * vel) * t);
     vec2 wave = shotgun(6000.0 * t, 2.0, 0.0, 0.0);
-    dest += 0.16 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
+    dest += 0.24 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
   }
 
   { // open hihat
@@ -219,7 +219,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave;
     }
 
-    dest += 0.1 * env * mix(0.2, 1.0, sidechain) * tanh(2.0 * sum);
+    dest += 0.3 * env * mix(0.2, 1.0, sidechain) * tanh(2.0 * sum);
   }
 
   { // clap
@@ -234,7 +234,7 @@ vec2 mainAudio(vec4 time) {
 
     vec2 wave = cyclic(vec3(4.0 * cis(800.0 * t), 840.0 * t), 0.5, 2.0).xy;
 
-    dest += 0.2 * tanh(20.0 * env * wave);
+    dest += 0.18 * tanh(20.0 * env * wave);
   }
 
   { // ride
