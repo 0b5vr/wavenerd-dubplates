@@ -6,6 +6,7 @@
 #define B2T (60.0 / bpm)
 #define ZERO min(0, int(bpm))
 #define saturate(x) clamp(x, 0., 1.)
+#define linearstep(a,b,x) saturate(((x)-(a))/((b)-(a)))
 #define clip(x) clamp(x, -1., 1.)
 #define lofi(i,m) (floor((i)/(m))*(m))
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
@@ -136,6 +137,24 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
   }
 
   return sum / 64.0;
+}
+
+float glidephase(float t, float t1, float p0, float p1) {
+  if (p0 == p1 || t1 == 0.0) {
+    return t * p2f(p1);
+  }
+
+  float m0 = (p0 - 69.0) / 12.0;
+  float m1 = (p1 - 69.0) / 12.0;
+  float b = (m1 - m0) / t1;
+
+  return (
+    + p2f(p0) * (
+      + min(t, 0.0)
+      + (pow(2.0, b * clamp(t, 0.0, t1)) - 1.0) / b / LN2
+    )
+    + max(0.0, t - t1) * p2f(p1)
+  );
 }
 
 mat3 orthBas(vec3 z) {
@@ -362,6 +381,9 @@ vec2 mainAudio(vec4 time) {
   { // acid
     const int N_NOTES = 5;
     const int NOTES[N_NOTES] = int[](0, 12, 18, 3, 9);
+    const int SLIDE[N_NOTES] = int[](0, -12, 0, 12, -12);
+    float SLIDE_T0 = 0.8 * S2T;
+    float SLIDE_TIME = 0.6 * S2T;
 
     float seqi;
     vec4 seq = quant(time.z, 1.15, seqi);
@@ -371,21 +393,26 @@ vec2 mainAudio(vec4 time) {
     q -= mix(0.01, 0.15 * B2T, fract(seqi * 0.389));
     float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
 
-    float cutoff = 8.0;
-    // cutoff += -3.0 + 6.0 * paramFetch(param_knob0);
-    cutoff += 2.0 * smoothstep(0.0, 0.01, t) * exp(-8.0 * t);
-    cutoff += 2.0 * fract(seqi * 0.612);
+    float cenv = smoothstep(0.0, 0.01, t) * exp(-8.0 * t);
+    float cutoff = (
+      6.0
+      + 2.0 * cenv
+      + 2.0 * fract(seqi * 0.612)
+      + 3.0 * paramFetch(param_knob0)
+    );
     float cfreq = exp2(cutoff);
-    float reso = 0.7;
-    // reso = paramFetch(param_knob1);
+    float reso = paramFetch(param_knob1);
 
-    float pitch = 36.0 + TRANSPOSE + float(NOTES[int(seqi) % N_NOTES]);
-    float basefreq = p2f(pitch);
+    int i = int(seqi) % N_NOTES;
+    float pitch = 36.0 + TRANSPOSE + float(NOTES[i]);
+    float pitch1 = pitch + float(SLIDE[i]);
+    float basefreq = p2f(mix(pitch, pitch1, linearstep(0.0, SLIDE_TIME, t - SLIDE_T0)));
+    float basephase = glidephase(t - SLIDE_T0, SLIDE_TIME, pitch, pitch1);
 
     vec2 sum = vec2(0.0);
 
     { // sub
-      float phase = 0.5 * t * basefreq;
+      float phase = 0.5 * basephase;
       dest += 0.3 * env * tanh(1.5 * sin(TAU * phase));
     }
 
@@ -399,7 +426,7 @@ vec2 mainAudio(vec4 time) {
       float coeff = exp(-0.1 * p);
 
       vec2 filt = ladderLPF(freq, cfreq, reso);
-      float phase = t * freq;
+      float phase = basephase * p;
       // phase += TAU * dice.z;
 
       vec2 wave = vec2(0.0);
@@ -407,7 +434,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave * env * coeff * filt.x;
     }
 
-    dest += 0.25 * mix(0.8, 1.0, duck) * tanh(3.0 * sum);
+    dest += 0.25 * mix(0.8, 1.0, duck) * clip(4.0 * sum);
   }
 
   return clip(1.3 * tanh(dest));
