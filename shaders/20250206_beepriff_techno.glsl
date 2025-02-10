@@ -357,32 +357,8 @@ vec2 mainAudio(vec4 time) {
 
   //   vec2 wave = tri(5000.0 * t + vec2(0.0, 0.25));
 
-  //   dest += 0.3 * env * vec2(wave);
+  //   dest += 0.14 * env * vec2(wave);
   // }
-
-  { // fm shot
-    float t = tmod(time - 4.5 * B2T, 16.0 * B2T);
-
-    float env = smoothstep(0.0, 0.001, t) * exp(-4.0 * t);
-
-    vec2 sum = vec2(0.0);
-    repeat(i, 32) {
-      float fi = float(i);
-      vec3 dice = hash3f(vec3(i / 2, 11, 12));
-      float pol = u2b(float(i % 2));
-      vec2 dicen = boxMuller(dice.xy);
-
-      float freq = 100.0;
-      freq *= exp2(0.02 * dicen.x);
-      float phase = freq * (t + 0.0003 * pol) + dice.z;
-      phase += 0.5 * exp(-0.5 * t) * sin(TAU * 0.42 * phase + sin(TAU * 1.88 * phase));
-
-      float wave = pol * sin(TAU * phase);
-      sum += vec2(wave) * rotate2D(TAU * dice.y);
-    }
-
-    dest += 0.12 * mix(0.2, 1.0, duck) * env * sum;
-  }
 
   { // crash
     float t = time.z;
@@ -426,6 +402,91 @@ vec2 mainAudio(vec4 time) {
       }
     }
     dest += 0.12 * mix(0.2, 1.0, duck) * sum;
+  }
+
+  { // vowel
+    vec2 sum = vec2(0.0);
+
+    repeat(iDelay, 5) {
+      float fiDelay = float(iDelay);
+      float delaydecay = exp(-fiDelay);
+      float toff = -3.0 * S2T * fiDelay;
+
+      vec4 seq = seq16(time.y + toff, 0xffff);
+      float s = seq.s + 16.0 * mod(floor((time.z + toff) / timeLength.y), 16.0);
+      float t = seq.t;
+      float q = seq.q;
+
+      if (mod(s - 16.0, 32.0) < 32.0 - 7.0) { continue; }
+
+      float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q - 0.2 * S2T);
+
+      float basefreq = p2f(48.0 + TRANSPOSE - 3.0);
+      float amfreq = 8.0 * basefreq;
+
+      const int N_UNISON = 5;
+
+      vec2 sumd = vec2(0.0);
+      repeat(iUnison, N_UNISON) {
+        float fiUnison = float(iUnison);
+        vec3 diceu = hash3f(vec3(fiUnison, 3, 89));
+
+        float tt = t;
+        tt += 0.002 * sin(TAU * (tt + fiUnison / float(N_UNISON))); // chorus
+        tt += sin(TAU * 4.0 * tt) / 4.0 / 800.0; // vibrato
+
+        vec2 sumu = vec2(0.0);
+        float ampsum = 0.001;
+        repeat(i, 20) { // tonal
+          float fi = float(i);
+          float p = 3.0 + 2.0 * fi;
+
+          float freq = basefreq * p;
+          float phase = freq * tt + diceu.y;
+
+          float amp = 1.0 / p;
+          float kam = 0.5 * abs(log2(freq) - log2(amfreq));
+          amp *= exp(-kam * kam);
+          float kn = 6.0 * cyclic(vec3(0.2 * p, 0.5 * s, 8.0), 0.5, 1.3).x;
+          float an = exp(-kn * kn);
+          amp *= an;
+
+          sumu += amp * sin(TAU * phase);
+          ampsum += amp;
+        }
+        sumu /= ampsum;
+
+        sumd += sumu * rotate2D(TAU * fiUnison / float(N_UNISON));
+      }
+
+      sum += delaydecay * env * sumd;
+    }
+
+    dest += 0.1 * mix(0.2, 1.0, duck) * sum;
+  }
+
+  { // fm shot
+    float t = tmod(time - 4.5 * B2T, 16.0 * B2T);
+
+    float env = smoothstep(0.0, 0.001, t) * exp(-4.0 * t);
+
+    vec2 sum = vec2(0.0);
+    repeat(i, 32) {
+      float fi = float(i);
+      vec3 dice = hash3f(vec3(i / 2, 11, 12));
+      float pol = u2b(float(i % 2));
+      vec2 dicen = boxMuller(dice.xy);
+
+      float freq = 100.0;
+      freq *= exp2(0.02 * dicen.x);
+      float phase = freq * (t + 0.0003 * pol) + dice.z;
+      phase += 0.5 * exp(-0.5 * t) * sin(TAU * 0.42 * phase + sin(TAU * 1.88 * phase));
+
+      float wave = pol * sin(TAU * phase);
+      sum += vec2(wave) * rotate2D(TAU * dice.y);
+    }
+
+    dest += 0.1 * mix(0.2, 1.0, duck) * env * sum;
   }
 
   { // bell
@@ -481,19 +542,21 @@ vec2 mainAudio(vec4 time) {
   //     float fade = sin(PI * tprog);
 
   //     float pitch = 60.0 + TRANSPOSE + float(CHORD[i % 8]);
-  //     pitch += 0.08 * boxMuller(dice.xy).x;
   //     float freq = p2f(pitch);
+  //     float phase = freq * t + dice.z;
+  //     phase += 0.6 * sin(TAU * t + dice.z);
 
   //     vec3 p = vec3(0.0, 0.0, 40.0);
-  //     p.xy += 1.0 * cis(TAU * freq * t);
+  //     p.xy += 1.0 * cis(TAU * phase);
   //     p.yz += 0.2 * cis(time.w);
+  //     p.zx += 0.04 * cheapnoise(phase / 16.0);
   //     vec3 p2 = p + vec3(0.0, 0.0, 0.2);
   //     vec2 wave = cyclic(p, 0.5, 1.6).xy;
   //     wave -= cyclic(p2, 0.5, 1.6).xy;
   //     sum += 0.2 * fade * wave * rotate2D(fi);
   //   }
 
-  //   dest += 1.0*0.3 * mix(0.4, 1.0, duck) * sum;
+  //   dest += 0.3 * mix(0.4, 1.0, duck) * sum;
   // }
 
   return clip(1.3 * tanh(dest));
