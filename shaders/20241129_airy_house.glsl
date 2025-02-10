@@ -371,7 +371,6 @@ vec2 mainAudio(vec4 time) {
       float pers = 0.2;
       pers *= 0.01 + fade;
 
-      vec3 c = vec3(7.0);
       vec3 d = vec3(7.0, -3.0, 2.0);
 
       vec2 wave = mix(
