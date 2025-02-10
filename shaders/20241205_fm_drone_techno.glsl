@@ -262,7 +262,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave;
     }
 
-    dest += 0.23 * mix(0.2, 1.0, duck) * env * tanh(2.0 * sum);
+    dest += 0.2 * mix(0.2, 1.0, duck) * env * tanh(2.0 * sum);
   }
 
   { // perc
@@ -309,7 +309,7 @@ vec2 mainAudio(vec4 time) {
 
     vec2 wave = cis(-TAU * 4300.0 * t);
 
-    dest += 0.1 * mix(0.3, 1.0, duck) * env * wave;
+    dest += 0.14 * mix(0.3, 1.0, duck) * env * wave;
   }
 
   { // clap
@@ -353,7 +353,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave;
     }
 
-    dest += 0.1 * mix(0.3, 1.0, duck) * env * tanh(sum);
+    dest += 0.05 * mix(0.3, 1.0, duck) * env * tanh(sum);
   }
 
   { // additive riff
