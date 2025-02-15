@@ -229,7 +229,7 @@ vec2 mainAudio(vec4 time) {
         - 6.0 * envd * exp2(-t * 50.0)
         - 2.0 * imp
       );
-      float wave = sin(TAU * phase + 0.3 * cos(TAU * phase));
+      float wave = sin(TAU * phase + 0.3 * sin(TAU * phase));
       wave -= imp;
       dest += 0.6 * clip(tanh(2.0 * env * wave));
     }
