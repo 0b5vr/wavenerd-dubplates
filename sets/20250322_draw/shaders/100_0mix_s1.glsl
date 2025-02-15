@@ -16,6 +16,10 @@ const float p4=exp2(5./12.);
 const float p5=exp2(7./12.);
 const uint uint_max=0xffffffffu;
 
+uniform vec4 param_knob7;
+
+#define p7 paramFetch(param_knob7)
+
 uvec3 pcg3d(uvec3 v){
   v=v*1145141919u+1919810u;
   v.x+=v.y*v.z;
@@ -118,23 +122,20 @@ vec2 mainAudio(vec4 time){
 
   float sidechain=1.;
 
-  { // kick
-    float t=time.x;
-    sidechain=smoothstep(0.,1E-3,b2t-t)*smoothstep(0.,.8*b2t,t);
+  // { // kick
+  //   float t=time.x;
+  //   sidechain=smoothstep(0.,1E-3,b2t-t)*smoothstep(0.,.8*b2t,t);
 
-    // {
-    //   float env=linearstep(0.4,0.15,t);
+  //   {
+  //     float env=linearstep(0.4,0.15,t);
+  //     env*=mix(1.,exp(-50.*t),p7);
 
-    //   // { // hi pass like
-    //   //   env*=exp(-50.*t);
-    //   // }
-
-    //   dest+=.6*env*tanh(2.*sin(
-    //     300.*t-20.*exp(-40.*t)
-    //     -5.*exp(-400.*t)
-    //   ));
-    // }
-  }
+  //     dest+=.6*env*tanh(2.*sin(
+  //       300.*t-20.*exp(-40.*t)
+  //       -5.*exp(-400.*t)
+  //     ));
+  //   }
+  // }
 
   // { // sub kick
   //   float t=mod(time.x-.25*b2t,.25*b2t);
