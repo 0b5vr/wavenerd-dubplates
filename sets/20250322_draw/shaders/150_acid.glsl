@@ -19,8 +19,15 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob4;
-uniform vec4 param_knob5;
+uniform vec4 param_knob4; // acid cutoff
+uniform vec4 param_knob5; // acid reso
+uniform vec4 param_knob6; // acid dissonance
+uniform vec4 param_knob7; // acid centroid
+
+#define p4 paramFetch(param_knob4)
+#define p5 paramFetch(param_knob5)
+#define p6 paramFetch(param_knob6)
+#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -215,18 +222,20 @@ vec2 mainAudio(vec4 time) {
     //   env *= exp(-50.0 * t);
     // }
 
-    float tt = t;
-    float wave = 0.0;
+    // {
+    //   float tt = t;
+    //   float wave = 0.0;
 
-    wave += tanh(2.5 * sin(TAU * (
-      50.0 * tt
-      - 8.0 * exp2(-tt * 33.0)
-    )));
+    //   wave += tanh(2.5 * sin(TAU * (
+    //     50.0 * tt
+    //     - 8.0 * exp2(-tt * 33.0)
+    //   )));
 
-    float tick = env * exp2(-500.0 * t);
-    wave += env * tanh(1.5 * sin(TAU * 3.0 * tick));
+    //   float tick = env * exp2(-500.0 * t);
+    //   wave += env * tanh(1.5 * sin(TAU * 3.0 * tick));
 
-    dest += 0.6 * env * wave;
+    //   dest += 0.6 * env * wave;
+    // }
   }
 
   // { // hihat
@@ -370,13 +379,13 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.15 * mix(0.2, 1.0, duck) * env * tanh(sum);
   // }
 
-  { // crash
-    float t = mod(time.z, 64.0 * B2T);
+  // { // crash
+  //   float t = mod(time.z, 64.0 * B2T);
 
-    float env = mix(exp(-t), exp(-10.0 * t), 0.7);
-    vec2 wave = shotgun(3800.0 * t, 2.0, 0.0, 1.0);
-    dest += 0.4 * env * mix(0.5, 1.0, duck) * tanh(8.0 * wave);
-  }
+  //   float env = mix(exp(-t), exp(-10.0 * t), 0.7);
+  //   vec2 wave = shotgun(3800.0 * t, 2.0, 0.0, 1.0);
+  //   dest += 0.4 * env * mix(0.5, 1.0, duck) * tanh(8.0 * wave);
+  // }
 
   { // acid
     const int N_NOTES = 5;
@@ -420,8 +429,8 @@ vec2 mainAudio(vec4 time) {
       float fi = float(i);
       vec3 dice = hash3f(vec3(i) + vec3(1, 5, 7));
 
-      float p = 1.0 + 1.0 * fi;
-      // p = mix(p, 16.0, 0.1); // go weird
+      float p = 1.0 + (1.0 + p6) * fi;
+      p = mix(p, 8.0, p7);
       float freq = basefreq * p;
       float coeff = exp(-0.1 * p);
 
