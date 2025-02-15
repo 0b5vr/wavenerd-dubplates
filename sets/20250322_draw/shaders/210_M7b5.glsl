@@ -20,6 +20,10 @@ const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
+uniform vec4 param_knob7; // kick cut
+
+#define p7 paramFetch(param_knob7)
+
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
   v.x += v.y * v.z;
@@ -207,49 +211,46 @@ vec2 mainAudio(vec4 time) {
     7, 10, 12, 14, 15, 17, 19, 22
   );
 
-  { // kick
-    vec4 seq = seq16(time.y, 0x9192);
-    float t = seq.t;
-    float q = seq.q;
-    duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
+  // { // kick
+  //   vec4 seq = seq16(time.y, 0x9192);
+  //   float t = seq.t;
+  //   float q = seq.q;
+  //   duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
-    float env = smoothstep(0.0, 0.001, q) * exp2(-20.0 * max(t - 0.1, 0.0));
+  //   float env = smoothstep(0.0, 0.001, q) * exp2(-20.0 * max(t - 0.1, 0.0));
+  //   env *= mix(1.0, exp2(-40.0 * t), p7);
 
-    // {
-    //   env *= exp2(-40.0 * t);
-    // }
+  //   {
+  //     float envd = mix(1.0, 0.7, step(6.0, mod(seq.s, 8.0)));
+  //     float imp = exp2(-t * 800.0);
 
-    {
-      float envd = mix(1.0, 0.7, step(6.0, mod(seq.s, 8.0)));
-      float imp = exp2(-t * 800.0);
+  //     float phase = (
+  //       42.0 * t
+  //       - 6.0 * envd * exp2(-t * 20.0)
+  //       - 6.0 * envd * exp2(-t * 50.0)
+  //       - 2.0 * imp
+  //     );
+  //     float wave = sin(TAU * phase + 0.3 * cos(TAU * phase));
+  //     wave -= imp;
+  //     dest += 0.6 * clip(tanh(2.0 * env * wave));
+  //   }
+  // }
 
-      float phase = (
-        42.0 * t
-        - 6.0 * envd * exp2(-t * 20.0)
-        - 6.0 * envd * exp2(-t * 50.0)
-        - 2.0 * imp
-      );
-      float wave = sin(TAU * phase + 0.3 * cos(TAU * phase));
-      wave -= imp;
-      dest += 0.6 * clip(tanh(2.0 * env * wave));
-    }
-  }
+  // { // sub kick
+  //   vec4 seq = seq16(time.y, 0xffff);
+  //   float t = seq.t;
+  //   float q = seq.q;
 
-  { // sub kick
-    vec4 seq = seq16(time.y, 0xffff);
-    float t = seq.t;
-    float q = seq.q;
+  //   float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
+  //   env *= exp2(-8.0 * t);
 
-    float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
-    env *= exp2(-8.0 * t);
-
-    {
-      float wave = sin(TAU * (
-        46.0 * t
-      ));
-      dest += 0.5 * duck * tanh(2.0 * env * wave);
-    }
-  }
+  //   {
+  //     float wave = sin(TAU * (
+  //       46.0 * t
+  //     ));
+  //     dest += 0.5 * duck * tanh(2.0 * env * wave);
+  //   }
+  // }
 
   // { // hihat
   //   float st;
