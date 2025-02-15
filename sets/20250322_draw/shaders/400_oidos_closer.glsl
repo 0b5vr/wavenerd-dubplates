@@ -1,3 +1,25 @@
+//                                                                                   
+//    ▀██                            ▄█▀                             ▀█▄             
+//   ▄▄██  ▄▄ ▄▄▄   ▄▄▄▄   ▄▄   ▄▄  ██  ▄▄▄▄▄  ▄▄▄  ▄   ▄ ▄   ▄  ▄▄▄   ██  ██        
+// ▄█▀ ██   ██▀ ██  ▄▄▄██  ██ ▄ ██  ██    █   █   █ █▄▄▀   ▀▄▀  █ ▄ █  ██            
+// ██  ██   ██     ██  ██  ██ █ ██  ██    █   ▀▄▄▄▀ █  ▀▄   █   ▀▄▄▄▀  ██  ▄▄        
+// ▀█▄▄▀█▄ ▄██▄    ▀█▄▄▀█▄ ▀██▀██▀   ▀█▄                             ▄█▀  ▄█▀        
+//                                                                                   
+// Audio/Visual Event "draw(tokyo); #2"                                              
+// CIRCUS TOKYO @ Shibuya, Tokyo                           2025-03-22 14:00 - 20:30  
+//                                                                                   
+//                            0b5vr x Renard x ukonpower                             
+
+// Shoutouts to:
+// - 🔥 Renard and ukonpower
+// - 🤲 Saina, W0NYV, and all the draw(); crew
+// - 🗼 Tokyo Demo Fest and SESSIONS
+// - 🔊 Demoscene techno headz! mfx, Epoch, luchak, chlumpie, dok & jon
+// - 🗜️ The 64k scene! Conspiracy, farbrausch, Logicoma, Mercury
+// - ✨️ The 4k scene! 0x4015, iq, LJ & Virgill, Blueberry, pestis
+// - 💻️ Atsushi Tadokoro, moistpeace, yaxu, Algorave
+// - 🎛️ Yebisu303, Nyolfen, fendoap, DJ SHARPNEL, Elektron, Dirtywave
+
 #define S2T (15.0 / bpm)
 #define B2T (60.0 / bpm)
 #define ZERO min(0, int(bpm))
