@@ -11,7 +11,7 @@
 #define tri(p) (1.-4.*abs(fract(p-0.25)-0.5))
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
 
-const float SWING = 0.52;
+const float SWING = 0.64; // -> 0.52
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
@@ -19,6 +19,10 @@ const float LN2 = log(2.0);
 const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
+
+uniform vec4 param_knob7; // kick cut
+
+#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -223,27 +227,24 @@ vec2 mainAudio(vec4 time) {
   vec2 dest = vec2(0);
   float duck = 1.0;
 
-  // { // kick
-  //   vec4 seq = seq16(time.y, 0x9294);
-  //   float t = seq.t;
-  //   float q = seq.q;
-  //   duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
+  { // kick
+    vec4 seq = seq16(time.y, 0x9294);
+    float t = seq.t;
+    float q = seq.q;
+    duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
-  //   float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
+    float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
+    env *= mix(1.0, exp2(-40.0 * t), p7);
 
-  //   // {
-  //   //   env *= exp(-60.0 * t);
-  //   // }
-
-  //   {
-  //     float wave = sin(TAU * (
-  //       45.0 * t
-  //       - 1.0 * exp2(-t * 20.0)
-  //       - mix(4.0, 5.0, mod(seq.s, 8.0) != 3.0) * exp2(-t * 60.0)
-  //     ));
-  //     dest += 0.6 * clip(2.0 * tri(0.40 * env * wave));
-  //   }
-  // }
+    // {
+    //   float wave = sin(TAU * (
+    //     45.0 * t
+    //     - 1.0 * exp2(-t * 20.0)
+    //     - mix(4.0, 5.0, mod(seq.s, 8.0) != 3.0) * exp2(-t * 60.0)
+    //   ));
+    //   dest += 0.6 * clip(2.0 * tri(0.40 * env * wave));
+    // }
+  }
 
   // { // sub kick
   //   vec4 seq = seq16(time.y, 0xffff);
