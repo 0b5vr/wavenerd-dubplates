@@ -217,7 +217,7 @@ vec2 mainAudio(vec4 time) {
 
     float env = smoothstep(0.0, 0.001, q) * exp(-20.0 * max(t - 0.1, 0.0));
 
-    // {
+    // { // highpass-like
     //   env *= exp(-50.0 * t);
     // }
 
@@ -276,7 +276,7 @@ vec2 mainAudio(vec4 time) {
 
     float env = exp2(-80.0 * t) * smoothstep(0.0, 0.01, q);
     vec2 wave = shotgun(3700.0 * t, 2.4, 0.0, 1.0);
-    dest += 0.1 * duck * env * tanh(8.0 * wave);
+    dest += 0.2 * duck * env * tanh(8.0 * wave);
   }
 
   { // open hihat
@@ -301,7 +301,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave * mix(1.0, 0.5, odd);
     }
 
-    dest += 0.18 * env * duck * tanh(sum);
+    dest += 0.24 * env * duck * tanh(sum);
   }
 
   // { // ride
@@ -546,17 +546,17 @@ vec2 mainAudio(vec4 time) {
   //     float phase = freq * t + dice.z;
   //     phase += 0.6 * sin(TAU * t + dice.z);
 
-  //     vec3 p = vec3(0.0, 0.0, 40.0);
+  //     vec3 p = vec3(0.0);
   //     p.xy += 1.0 * cis(TAU * phase);
-  //     p.yz += 0.2 * cis(time.w);
-  //     p.zx += 0.04 * cheapnoise(phase / 16.0);
+  //     p.yz *= rotate2D(0.3 * time.w);
+  //     p += vec3(0.0, 0.0, 40.0);
   //     vec3 p2 = p + vec3(0.0, 0.0, 0.2);
-  //     vec2 wave = cyclic(p, 0.5, 1.6).xy;
-  //     wave -= cyclic(p2, 0.5, 1.6).xy;
+
+  //     vec2 wave = cyclic(p, 0.5, 2.4).xy;
   //     sum += 0.2 * fade * wave * rotate2D(fi);
   //   }
 
-  //   dest += 0.3 * mix(0.4, 1.0, duck) * sum;
+  //   dest += 0.2 * mix(0.4, 1.0, duck) * sum;
   // }
 
   return clip(1.3 * tanh(dest));
