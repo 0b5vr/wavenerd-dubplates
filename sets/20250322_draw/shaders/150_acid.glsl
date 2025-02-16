@@ -21,8 +21,8 @@ const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob4; // acid cutoff
 uniform vec4 param_knob5; // acid reso
-uniform vec4 param_knob6; // acid dissonance
-uniform vec4 param_knob7; // acid centroid
+uniform vec4 param_knob6; // acid centroid
+uniform vec4 param_knob7; // kick cut
 
 #define p4 paramFetch(param_knob4)
 #define p5 paramFetch(param_knob5)
@@ -217,10 +217,7 @@ vec2 mainAudio(vec4 time) {
     );
 
     float env = smoothstep(0.0, 0.001, q) * exp(-20.0 * max(t - 0.1, 0.0));
-
-    // {
-    //   env *= exp(-50.0 * t);
-    // }
+    env *= mix(1.0, exp(-50.0 * t), p7);
 
     // {
     //   float tt = t;
@@ -429,8 +426,8 @@ vec2 mainAudio(vec4 time) {
       float fi = float(i);
       vec3 dice = hash3f(vec3(i) + vec3(1, 5, 7));
 
-      float p = 1.0 + (1.0 + p6) * fi;
-      p = mix(p, 8.0, p7);
+      float p = 1.0 + 1.0 * fi;
+      p = mix(p, 8.0, p6);
       float freq = basefreq * p;
       float coeff = exp(-0.1 * p);
 
