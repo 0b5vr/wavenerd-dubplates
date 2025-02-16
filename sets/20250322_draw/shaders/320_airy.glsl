@@ -17,9 +17,15 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob0; // pluck volume
-uniform vec4 param_knob1; // chord volume
-uniform vec4 param_knob4; // pluck envelope
+uniform vec4 param_knob0; // chord volume
+uniform vec4 param_knob1; // pluck volume
+uniform vec4 param_knob5; // pluck envelope
+uniform vec4 param_knob7; // kick cut
+
+#define p0 paramFetch(param_knob0)
+#define p1 paramFetch(param_knob1)
+#define p5 paramFetch(param_knob5)
+#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -216,10 +222,7 @@ vec2 mainAudio(vec4 time) {
   //   );
 
   //   float env = smoothstep(0.0, 0.001, q) * exp(-20.0 * max(t - 0.12, 0.0));
-
-  //   // {
-  //   //   env *= exp(-50.0 * t);
-  //   // }
+  //   env *= mix(1.0, exp(-50.0 * t), p7);
 
   //   float tt = t;
   //   float wave = 0.0;
@@ -385,7 +388,7 @@ vec2 mainAudio(vec4 time) {
       sum += amp * wave * rotate2D(float(i));
     }
 
-    dest += paramFetch(param_knob1) * 0.04 * mix(0.2, 1.0, duck) * sum;
+    dest += p0 * 0.04 * mix(0.2, 1.0, duck) * sum;
   }
 
   { // pluck chord
@@ -413,14 +416,14 @@ vec2 mainAudio(vec4 time) {
       vec2 phase = (t * freq) * exp(0.001 * dicen.xy);
       phase += dice.xy;
 
-      float kfenv = exp2(4.0 * (1.0 - paramFetch(param_knob4)));
+      float kfenv = exp2(4.0 * (1.0 - p5));
       float fenv = mix(0.5, 1.0, exp2(-kfenv * t)) * exp(-0.1 * iDelay);
       vec2 wave = vec2(cheapFilterSaw(phase, fenv));
 
       sum += env * wave * rotate2D(float(i)) * exp(-0.5 * iDelay);
     }
 
-    dest += paramFetch(param_knob0) * 0.1 * mix(0.2, 1.0, duck) * sum;
+    dest += p1 * 0.1 * mix(0.2, 1.0, duck) * sum;
   }
 
   { // fm pluck
