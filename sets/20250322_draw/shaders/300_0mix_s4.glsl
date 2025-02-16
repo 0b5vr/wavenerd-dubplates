@@ -1,9 +1,3 @@
-// default: without transpose, kick,       crash, 2-voice arp
-// fill:       with transpose, kick,       crash, 5-voice arp
-// drop:       with transpose, kick, bass, crash, 5-voice arp
-
-#define transpose -6.0
-
 #define b2t (60./bpm)
 #define t2b (1./b2t)
 #define zero min(0, int(bpm))
@@ -121,7 +115,7 @@ vec2 mainAudio(vec4 time){
 
   float sidechain=1.;
 
-  float trans=transpose+(mod(time.z,16.*b2t)<(12.*b2t)?0.:-2.);
+  float trans=mod(time.z,16.*b2t)<(12.*b2t)?-6.:-8.;
 
   { // kick
     float t=time.x;
