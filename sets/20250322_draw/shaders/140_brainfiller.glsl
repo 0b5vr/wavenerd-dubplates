@@ -15,6 +15,14 @@ const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob4; // riff cutoff
+uniform vec4 param_knob5; // riff metal
+uniform vec4 param_knob6; // riff centroid
+uniform vec4 param_knob7; // kick cut
+
+#define p4 paramFetch(param_knob4)
+#define p5 paramFetch(param_knob5)
+#define p6 paramFetch(param_knob6)
+#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1664525u + 1013904223u;
@@ -172,10 +180,7 @@ vec2 mainAudio(vec4 time) {
     sidechain = 0.2 + 0.8 * smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
 
     float env = smoothstep(0.0, 0.001, q) * smoothstep(2.0 * B2T, 0.1 * B2T, t);
-
-    // {
-    //   env *= exp(-70.0 * t);
-    // }
+    env *= mix(1.0, exp(-70.0 * t), p7);
 
     {
       float wave = sin(
@@ -304,7 +309,7 @@ vec2 mainAudio(vec4 time) {
     float cutenv = smoothstep(0.0, 0.01, t) * exp(-14.0 * t);
     float cutoff = exp2(
       5.5
-      + 3.0 * paramFetch(param_knob4)
+      + 3.0 * p4
       + 3.0 * stmod
       + 4.0 * cutenv
     );
@@ -313,8 +318,8 @@ vec2 mainAudio(vec4 time) {
       float fi = float(i);
 
       float p = 1.0 + fi;
-      p = pow(p, 1.1); // metal
-      p = mix(p, 1.0, 0.1); // centroid
+      p = pow(p, mix(1.1, 1.5, p5)); // metal
+      p = mix(p, 1.0, p6); // centroid
       float freq = basefreq * p;
 
       vec2 phase = vec2(t * freq);
