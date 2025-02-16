@@ -401,9 +401,8 @@ vec2 mainAudio(vec4 time) {
 
     float cenv = smoothstep(0.0, 0.01, t) * exp(-8.0 * t);
     float cutoff = (
-      6.0
-      + 2.0 * cenv
-      + 2.0 * fract(seqi * 0.612)
+      8.0
+      + exp2(mix(-2.0, 2.0, fract(seqi * 0.612))) * cenv
       + 3.0 * paramFetch(param_knob4)
     );
     float cfreq = exp2(cutoff);
