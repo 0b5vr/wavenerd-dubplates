@@ -20,11 +20,15 @@ const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob0; // kick fill-in at 16th bar
+uniform vec4 param_knob0; // pad amp
 uniform vec4 param_knob1; // clap rhythm
+uniform vec4 param_knob3; // kick fill-in at 16th bar
+uniform vec4 param_knob7; // kick cut
 
 #define p0 paramFetch(param_knob0)
 #define p1 paramFetch(param_knob1)
+#define p3 paramFetch(param_knob3)
+#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -135,39 +139,36 @@ vec2 mainAudioDry(vec4 time) {
     -5, 2, 7, 9, 10, 12, 14, 17
   );
 
-  bool fillIn = p0 > 0.5 && tmod(time, 4.0 * B2T) > 3.5 * B2T;
+  bool fillIn = p3 > 0.5 && tmod(time, 4.0 * B2T) > 3.5 * B2T;
 
-  { // kick
-    float t = time.x;
-    float q = B2T - t;
+  // { // kick
+  //   float t = time.x;
+  //   float q = B2T - t;
 
-    if (fillIn) {
-      t = mod(t, 0.5 * B2T);
-      q = 0.5 * B2T - t;
-    }
-    
-    duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
+  //   if (fillIn) {
+  //     t = mod(t, 0.5 * B2T);
+  //     q = 0.5 * B2T - t;
+  //   }
 
-    float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
+  //   duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
-    // if (!fillIn) { // high-pass like
-    //   env *= exp(-70.0 * t);
-    // }
+  //   float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
+  //   env *= mix(1.0, exp(-70.0 * t), p7);
 
-    // {
-    //   float wave = sin(TAU * (
-    //     40.0 * t
-    //     - 4.0 * exp2(-t * 30.0)
-    //     - 3.0 * exp2(-t * 90.0)
-    //     - 4.0 * exp2(-t * 500.0)
-    //   ));
-    //   dest += 0.6 * tanh(2.0 * env * wave);
-    // }
+  //   {
+  //     float wave = sin(TAU * (
+  //       40.0 * t
+  //       - 4.0 * exp2(-t * 30.0)
+  //       - 3.0 * exp2(-t * 90.0)
+  //       - 4.0 * exp2(-t * 500.0)
+  //     ));
+  //     dest += 0.6 * tanh(2.0 * env * wave);
+  //   }
 
-    if (fillIn) {
-      return dest;
-    }
-  }
+  //   if (fillIn) {
+  //     return dest;
+  //   }
+  // }
 
   // { // bass
   //   float t = time.x;
@@ -200,7 +201,7 @@ vec2 mainAudioDry(vec4 time) {
   //     0.5
   //   );
 
-  //   dest += 0.12 * env * mix(0.2, 1.0, duck) * tanh(8.0 * wave);
+  //   dest += 1.*0.12 * env * mix(0.2, 1.0, duck) * tanh(8.0 * wave);
   // }
 
   // { // open hihat
@@ -242,7 +243,7 @@ vec2 mainAudioDry(vec4 time) {
   // }
 
   // { // clap
-  //   float l = mix(2.0 * B2T, B2T, p1);
+  //   float l = p1 < 0.5 ? (2.0 * B2T) : B2T;
   //   float t = tmod(time - B2T, l);
   //   float q = l - t;
 
@@ -350,7 +351,7 @@ vec2 mainAudioDry(vec4 time) {
       sum += vec2(wave) * rotate2D(fi);
     }
 
-    dest += 0.03 * mix(0.2, 1.0, duck) * env * sum;
+    dest += p0 * 0.03 * mix(0.2, 1.0, duck) * env * sum;
   }
 
   { // sinearp
