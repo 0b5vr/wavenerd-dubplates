@@ -24,12 +24,14 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 
 uniform vec4 param_knob0; // bass amp
-uniform vec4 param_knob4; // bass macro
-uniform vec4 param_knob5; // oidos filter
+uniform vec4 param_knob4; // bass shape
+uniform vec4 param_knob5; // bass macro
+uniform vec4 param_knob7; // oidos filter
 
 #define p0 paramFetch(param_knob0)
 #define p4 paramFetch(param_knob4)
 #define p5 paramFetch(param_knob5)
+#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -129,7 +131,7 @@ vec2 mainAudio(vec4 time) {
     float freq = 40.0;
     freq = floor(freq * l) / l;
 
-    float macro = exp2(9.0 * (-1.0 + p4));
+    float macro = exp2(6.0 * (-1.0 + p5)) * smoothstep(0.0, 1.0, p5);
 
     const int N_UNISON = 64;
 
@@ -137,9 +139,16 @@ vec2 mainAudio(vec4 time) {
     repeat(i, N_UNISON) {
       vec3 dice = hash3f(vec3(i, 22, 89));
 
-      float phase = fract(freq * t);
+      float phase = freq * t;
+      float z = p4 * (1.0 - p5) * 0.1 * sin(4800.0 * TAU * time.x / timeLength.x);
       phase += 0.5 * macro * sin(TAU * (4.0 * t / l + dice.y));
-      sum += obsvr(phase) * rotate2D(macro * TAU * (dice.z - 0.5));
+
+      vec3 p = vec3(obsvr(phase), 0.0);
+      p.z += z;
+      p.zx *= rotate2D(0.5 * p4 * sin(TAU * 3.0 * t / l));
+      p.yz *= rotate2D(0.5 * p4 * sin(TAU * 5.0 * t / l + 2.0));
+      vec2 wave = 2.0 * p.xy / (2.0 - p.z);
+      sum += wave * rotate2D(macro * TAU * (dice.z - 0.5));
     }
 
     dest += p0 * exp2(3.0 * macro) * sum / float(N_UNISON);
@@ -164,15 +173,15 @@ vec2 mainAudio(vec4 time) {
       amp *= smoothstep(
         1.0 + FILTER_WIDTH,
         1.0,
-        diceA.y + (1.0 + FILTER_WIDTH) * linearstep(0.5, 0.0, p5)
+        diceA.y + (1.0 + FILTER_WIDTH) * linearstep(0.5, 0.0, p7)
       );
       amp *= smoothstep(
         0.0 - FILTER_WIDTH,
         0.0,
-        diceA.y - (1.0 + FILTER_WIDTH) * linearstep(0.5, 1.0, p5)
+        diceA.y - (1.0 + FILTER_WIDTH) * linearstep(0.5, 1.0, p7)
       );
 
-      float pm = 0.2 * smoothstep(0.0, 0.5, p5) * smoothstep(1.0, 0.5, p5);
+      float pm = 0.2 * smoothstep(0.0, 0.5, p7) * smoothstep(1.0, 0.5, p7);
       phase += pm * fract(4.0 * phase); // add high freq
 
       sum += amp * env * sin(TAU * phase) / 1000.0;
