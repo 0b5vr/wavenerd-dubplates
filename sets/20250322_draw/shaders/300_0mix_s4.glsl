@@ -16,10 +16,11 @@ const float p4=exp2(5./12.);
 const float p5=exp2(7./12.);
 const uint uint_max=0xffffffffu;
 
-uniform vec4 param_knob0;
+uniform vec4 param_knob0; // pad amp
+uniform vec4 param_knob7; // kick cut
 
 #define p0 paramFetch(param_knob0)
-
+#define p7 paramFetch(param_knob7)
 uvec3 pcg3d(uvec3 v){
   v=v*1145141919u+1919810u;
   v.x+=v.y*v.z;
@@ -123,10 +124,7 @@ vec2 mainAudio(vec4 time){
 
     if(time.z<61.*b2t){
       float env=linearstep(0.3,0.15,t);
-
-      // { // high-pass like
-      //   env*=exp(-50.0*t);
-      // }
+      env*=mix(1.,exp(-40.*t),p7);
 
       float phase=50.*t-11.*(exp(-25.*t)+exp(-100.*t)+exp(-700.*t));
       phase+=.2*exp(-20.*t)*sin(tau*phase+1.); // fm attack mod
