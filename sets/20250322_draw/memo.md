@@ -1,23 +1,8 @@
-### header
+# 20250322_draw
 
-```
-//    ▀██                            ▄█▀  ▄█            ▀██                     ▀█▄       
-//   ▄▄██  ▄▄ ▄▄▄   ▄▄▄▄   ▄▄   ▄▄  ██  ▄▄██▄▄   ▄▄▄▄▄   ██  ▄▄ ▄▄   ▄▄  ▄▄▄▄▄    ██  ██  
-// ▄█▀ ██   ██▀ ██  ▄▄▄██  ██ ▄ ██  ██    ██    ██   ██  ██▄█▀  ██   ██ ██   ██   ██      
-// ██  ██   ██     ██  ██  ██ █ ██  ██    ██    ██   ██  ██▀█▄  ██   ██ ██   ██   ██  ▄▄  
-// ▀█▄▄▀█▄ ▄██▄    ▀█▄▄▀█▄ ▀██▀██▀   ▀█▄  ▀█▄█▀ ▀█▄▄▄█▀ ▄██  ██ ▀█▄▄▄██ ▀█▄▄▄█▀ ▄█▀  ▄█▀  
-//                                                                  ▄█▀                   
-// Audio/Visual Event "draw(tokyo); #2"                         ▀▀▀▀▀                     
-// CIRCUS TOKYO @ Shibuya, Tokyo                                2025-03-22 14:00 - 20:30  
-//                                                                                        
-//                              0b5vr x Renard x ukonpower                                
-//
-// 0b5vr GLSL Techno Live Set
-// FULL PROCEDURAL, NO SAMPLES
-// ALL SOUNDS DIRECTLY GENERATED FROM SHADERS
-```
+0b5vr's Wavenerd live set @ draw(tokyo); #2
 
-### Set list
+## Set list
 
 ```
 - solid techno zone
