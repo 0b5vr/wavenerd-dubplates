@@ -92,6 +92,8 @@ vec2 mainAudio(vec4 time) {
   float duck = smoothstep(0.0, B2T, time.x) * smoothstep(0.0, 0.001, B2T - time.x);
 
   { // snare909
+    float fade = smoothstep(16.0 * B2T, 64.0 * B2T, time.z);
+
     vec4 seq = seq16(time.y, 0xffff);
     float t = seq.t;
     float q = seq.q;
@@ -121,7 +123,7 @@ vec2 mainAudio(vec4 time) {
       0.4
     );
 
-    dest += 0.3 * mix(p0, 1.0, duck) * tanh(3.0 * env * wave);
+    dest += fade * mix(p0, 1.0, duck) * tanh(3.0 * env * wave);
   }
 
   return clip(1.3 * tanh(dest));
