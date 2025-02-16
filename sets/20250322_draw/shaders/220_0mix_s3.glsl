@@ -153,7 +153,7 @@ vec2 mainAudio(vec4 time){
     sidechain=smoothstep(0.,1E-3,q)*smoothstep(0.,.8*b2t,t);
 
     {
-      float env=linearstep(.0,.001,t)*linearstep(0.3,0.1,t);
+      float env=linearstep(.0,.001,t)*linearstep(.0,.01,q)*linearstep(0.3,0.1,t);
 
       float wave=mix(
         sin(300.*t-65.*exp(-80.*t)),
