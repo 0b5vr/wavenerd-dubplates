@@ -31,7 +31,7 @@
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 
-uniform vec4 param_knob4;
+uniform vec4 param_knob4; // oidos filter
 
 #define p4 paramFetch(param_knob4)
 
