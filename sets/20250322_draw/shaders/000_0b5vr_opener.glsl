@@ -142,7 +142,7 @@ vec2 mainAudio(vec4 time) {
       sum += obsvr(phase) * rotate2D(macro * TAU * (dice.z - 0.5));
     }
 
-    dest += p0 * mix(1.0, 4.0, macro) * sum / float(N_UNISON);
+    dest += p0 * exp2(3.0 * macro) * sum / float(N_UNISON);
   }
 
   { // oidos drone
