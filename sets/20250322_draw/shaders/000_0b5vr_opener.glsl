@@ -87,11 +87,11 @@ vec2 obsvr(float phase) {
   float phaset = 9.0 * fract(phase);
 
   if (phaset < 4.0) {
-    dest += rect(fract(phaset / 4.0 - 0.0625), vec2(0.6, 1.0));
+    dest += rect(fract(phaset / 4.0 - 0.0625), vec2(1.2, 2.0));
   } else if (phaset < 8.0) {
-    dest += rect(fract(phaset / 4.0 + 0.0625), vec2(1.0, 0.6));
+    dest += rect(fract(phaset / 4.0 + 0.0625), vec2(2.0, 1.2));
   } else {
-    dest += rect(fract(phaset), vec2(0.2, 0.2));
+    dest += rect(fract(phaset), vec2(0.4, 0.4));
   }
 
   dest *= rotate2D(TAU * (0.125));
@@ -128,8 +128,9 @@ vec2 mainAudio(vec4 time) {
     float l = timeLength.z;
     float t = time.z;
 
-    float freq = 40.0;
+    float freq = round(40.0 * timeLength.x) / timeLength.x;
     freq = floor(freq * l) / l;
+    float freqh = round(20000.0 * timeLength.x) / timeLength.x;
 
     float macro = exp2(6.0 * (-1.0 + p5)) * smoothstep(0.0, 1.0, p5);
 
@@ -139,8 +140,8 @@ vec2 mainAudio(vec4 time) {
     repeat(i, N_UNISON) {
       vec3 dice = hash3f(vec3(i, 22, 89));
 
-      float phase = freq * t;
-      float z = p4 * (1.0 - p5) * 0.1 * sin(4800.0 * TAU * time.x / timeLength.x);
+      float phase = freq * time.x;
+      float z = p4 * (1.0 - p5) * 0.2 * sin(freqh * TAU * time.x);
       phase += 0.5 * macro * sin(TAU * (4.0 * t / l + dice.y));
 
       vec3 p = vec3(obsvr(phase), 0.0);
@@ -151,7 +152,7 @@ vec2 mainAudio(vec4 time) {
       sum += wave * rotate2D(macro * TAU * (dice.z - 0.5));
     }
 
-    dest += p0 * exp2(3.0 * macro) * sum / float(N_UNISON);
+    dest += 0.5 * p0 * exp2(3.0 * macro) * sum / float(N_UNISON);
   }
 
   { // oidos drone
@@ -181,7 +182,7 @@ vec2 mainAudio(vec4 time) {
         diceA.y - (1.0 + FILTER_WIDTH) * linearstep(0.5, 1.0, p7)
       );
 
-      float pm = 0.2 * smoothstep(0.0, 0.5, p7) * smoothstep(1.0, 0.5, p7);
+      float pm = 0.1 * smoothstep(0.0, 0.5, p7) * smoothstep(1.0, 0.5, p7);
       phase += pm * fract(4.0 * phase); // add high freq
 
       sum += amp * env * sin(TAU * phase) / 1000.0;
