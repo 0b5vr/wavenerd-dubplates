@@ -1,3 +1,6 @@
+// { LFG }
+// #define LFG
+
 #define TRANSPOSE -1.0
 
 #define S2T (15.0 / bpm)
@@ -139,7 +142,10 @@ vec2 mainAudioDry(vec4 time) {
     -5, 2, 7, 9, 10, 12, 14, 17
   );
 
-  bool fillIn = p3 > 0.5 && tmod(time, 4.0 * B2T) > 3.5 * B2T;
+  bool fillIn = false;
+  #ifdef LFG
+    fillIn = time.z > 63.5 * B2T;
+  #endif
 
   // { // kick
   //   float t = time.x;
@@ -153,7 +159,11 @@ vec2 mainAudioDry(vec4 time) {
   //   duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
   //   float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
-  //   env *= mix(1.0, exp(-70.0 * t), p7);
+  //   #ifdef LFG
+  //     env *= fillIn ? 1.0 : exp(-70.0 * t);
+  //   #else
+  //     env *= mix(1.0, exp(-70.0 * t), p7);
+  //   #endif
 
   //   {
   //     float wave = sin(TAU * (
@@ -201,7 +211,7 @@ vec2 mainAudioDry(vec4 time) {
   //     0.5
   //   );
 
-  //   dest += 1.*0.12 * env * mix(0.2, 1.0, duck) * tanh(8.0 * wave);
+  //   dest += 0.12 * env * mix(0.2, 1.0, duck) * tanh(8.0 * wave);
   // }
 
   // { // open hihat
@@ -243,7 +253,11 @@ vec2 mainAudioDry(vec4 time) {
   // }
 
   // { // clap
-  //   float l = p1 < 0.5 ? (2.0 * B2T) : B2T;
+  //   float l = 2.0 * B2T;
+  //   #ifdef LFG
+  //     l = B2T;
+  //   #endif
+
   //   float t = tmod(time - B2T, l);
   //   float q = l - t;
 
@@ -315,6 +329,55 @@ vec2 mainAudioDry(vec4 time) {
 
   //   dest += 0.05 * env * mix(0.3, 1.0, duck) * tanh(2.0 * sum);
   // }
+
+  #ifdef LFG
+    { // snare909
+      float fade = smoothstep(32.0 * B2T, 64.0 * B2T, time.z);
+
+      float t = mod(time.x, S2T);
+      float q = S2T - t;
+
+      if (time.z > 60.0 * B2T) {
+        float l = 0.125 * B2T;
+        t = mod(time.x, l);
+        q = l - t;
+      }
+
+      float env = smoothstep(0.0, 0.01, q);
+      env *= mix(
+        exp(-10.0 * max(t - 0.04, 0.0)),
+        exp(-80.0 * t),
+        0.3
+      );
+
+      float sinphase = 214.0 * t - 4.0 * exp2(-t * 200.0);
+      float noisephase = 128.0 * t;
+      vec2 wave = mix(
+        mix(
+          cis(TAU * (sinphase)),
+          cis(TAU * (1.5 * sinphase)),
+          0.3
+        ),
+        cheapnoise(noisephase) - cheapnoise(noisephase - 0.004),
+        0.4
+      );
+
+      dest += 0.14 * fade * mix(p0, 1.0, duck) * tanh(4.0 * env * wave);
+    }
+
+    if (time.z > 48.0 * B2T) { // sweep
+      float t = tmod(time, 16.0 * B2T);
+
+      float env = smoothstep(0.0, 16.0 * B2T, t);
+
+      vec2 wave = vec2(0.0);
+      wave += cheapnoise(128.0 * t);
+      wave += cheapnoise(128.0 * (t + 0.002 * exp(-0.4 * t)));
+      wave += cheapnoise(128.0 * (t + 0.004 * exp(-0.4 * t)));
+
+      dest += 0.07 * env * wave;
+    }
+  #endif
 
   // { // crash
   //   float t = mod(time.z, 64.0 * B2T);
