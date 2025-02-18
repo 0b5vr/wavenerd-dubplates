@@ -21,6 +21,7 @@ uniform vec4 param_knob7; // kick cut
 
 #define p0 paramFetch(param_knob0)
 #define p7 paramFetch(param_knob7)
+
 uvec3 pcg3d(uvec3 v){
   v=v*1145141919u+1919810u;
   v.x+=v.y*v.z;
