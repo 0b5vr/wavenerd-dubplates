@@ -275,7 +275,7 @@ vec2 mainAudio(vec4 time){
   //     )*r2d(time.w);
   //   }
 
-  //   dest+=1.*.2*mix(.2,1.,sidechain)*sum;
+  //   dest+=.0*.2*mix(.2,1.,sidechain)*sum;
   // }
 
   // { // s4 transition - snareroll
