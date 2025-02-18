@@ -13,6 +13,7 @@
 // Shoutouts to:
 // - 🔥 Renard and ukonpower
 // - 🤲 Saina, W0NYV, and all the draw(); crew
+// - ☄️ Revision and Meteoriks
 // - 🗼 Tokyo Demo Fest and SESSIONS
 // - 🔊 Demoscene techno headz! mfx, Epoch, luchak, chlumpie, dok & jon
 // - 🗜️ The 64k scene! Conspiracy, farbrausch, Logicoma, Mercury
