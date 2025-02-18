@@ -34,7 +34,7 @@ const int KICK_FILL = 0x8888;
 // const int KICK_FILL = 0x809e;
 // const int KICK_FILL = 0xa18e;
 
-const int SNARE_ROLL_LONGER = 0;
+const int SNARE_ROLL_LONGER = 1;
 
 const float TRANSPOSE = 3.0;
 
