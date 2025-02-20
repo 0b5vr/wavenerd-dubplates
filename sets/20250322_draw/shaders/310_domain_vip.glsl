@@ -24,13 +24,11 @@ const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob0; // pad amp
-uniform vec4 param_knob1; // clap rhythm
-uniform vec4 param_knob3; // kick fill-in at 16th bar
+uniform vec4 param_knob1; // arp amp
 uniform vec4 param_knob7; // kick cut
 
 #define p0 paramFetch(param_knob0)
 #define p1 paramFetch(param_knob1)
-#define p3 paramFetch(param_knob3)
 #define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
@@ -403,6 +401,7 @@ vec2 mainAudioDry(vec4 time) {
       float note = 48.0 + TRANSPOSE + float(CHORDS[(i % N_CHORD) + chordhead]);
       float freq = p2f(note) * exp2(0.016 * tan(2.0 * dice.y - 1.0));
       float phase = t * freq;
+      phase += 0.1 * sin(0.01 * TAU * phase);
       phase += 0.04 * sin(2.0 * TAU * phase);
 
       vec3 d = vec3(2.0, -3.0, -8.0);
@@ -417,7 +416,7 @@ vec2 mainAudioDry(vec4 time) {
     dest += p0 * 0.03 * mix(0.2, 1.0, duck) * env * sum;
   }
 
-  { // sinearp
+  { // sine lead
     int ARP[] = int[](
       0, -5, 3, -2, 0, 12, 0, 7,
       -5, 3, -2, 12, -5, 7, 3, -2
@@ -450,6 +449,51 @@ vec2 mainAudioDry(vec4 time) {
       sum += delaydecay * env * wave;
     }
     dest += 0.09 * mix(0.3, 1.0, duck) * sum;
+  }
+
+  { // y2k reso arp
+    vec2 sum = vec2( 0.0 );
+
+    const int NOTES[] = int[](
+      -4, 2, 3, 10,
+      -5, 0, 2, 9
+    );
+
+    repeat(iDelay, 4) {
+      float fi = float( iDelay );
+
+      float l = S2T;
+      float s = floor(time.z / l) - 3.0 * fi;
+      float t = mod(time.x, l);
+      float q = l - t;
+
+      vec3 dices = hash3f(vec3(s));
+
+      int notei = int(mod(s, 4.0)) + 4 * int(mod(s / 64.0, 2.0));
+      float pitch = 60.0 + TRANSPOSE;
+      pitch += float(NOTES[notei]);
+      float freq = p2f(pitch);
+      vec2 phase = vec2(t * freq) + dices.xy;
+
+      float env = linearstep(0.0, 0.01, t) * linearstep(0.0, 0.01, q);
+
+      float pitchf = 84.0 + TRANSPOSE;
+      pitchf -= 12.0 * cos(TAU * s / 64.0);
+      pitchf += 12.0 * exp(-10.0 * t);
+      float freqf = p2f(pitchf);
+      vec2 phasef = vec2(fract(phase) / (freq / freqf));
+
+      // cheap reso saw
+      vec2 wave = mix(
+        2.0 * (fract(phase) - 0.5),
+        cos(TAU * phasef),
+        exp(-0.5 * phasef) * smoothstep(1.0, 0.8, fract(phase))
+      );
+
+      sum += env * wave * exp(-fi);
+    }
+
+    dest += p1 * 0.1 * mix(0.5, 1.0, duck) * sum;
   }
 
   return dest;
