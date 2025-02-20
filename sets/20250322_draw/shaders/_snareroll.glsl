@@ -106,12 +106,12 @@ vec2 mainAudio(vec4 time) {
 
     float env = smoothstep(0.0, 0.01, q);
     env *= mix(
-      exp(-20.0 * max(t - 0.04, 0.0)),
+      exp(-10.0 * max(t - 0.04, 0.0)),
       exp(-80.0 * t),
       0.3
     );
 
-    float sinphase = 220.0 * t - 4.0 * exp2(-t * 200.0);
+    float sinphase = 214.0 * t - 4.0 * exp2(-t * 200.0);
     float noisephase = 128.0 * t;
     vec2 wave = mix(
       mix(
@@ -123,7 +123,7 @@ vec2 mainAudio(vec4 time) {
       0.4
     );
 
-    dest += fade * mix(p0, 1.0, duck) * tanh(3.0 * env * wave);
+    dest += fade * mix(p0, 1.0, duck) * tanh(4.0 * env * wave);
   }
 
   return clip(1.3 * tanh(dest));
