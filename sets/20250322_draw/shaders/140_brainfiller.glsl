@@ -5,6 +5,7 @@
 #define ZERO min(0, int(bpm))
 #define saturate(i) clamp(i,0.,1.)
 #define linearstep(a,b,x) saturate(((x)-(a))/((b)-(a)))
+#define clip(i) clamp(i, -1., 1.)
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
 #define repeat(i, n) for(int i=ZERO; i<(n); i++)
 
@@ -353,5 +354,5 @@ vec2 mainAudio(vec4 time) {
     dest += 1.0 * mix(0.2, 1.0, sidechain) * sum;
   }
 
-  return tanh(dest);
+  return clip(1.3 * tanh(dest));
 }
