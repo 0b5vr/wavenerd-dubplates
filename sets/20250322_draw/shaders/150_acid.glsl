@@ -439,7 +439,8 @@ vec2 mainAudio(vec4 time) {
       sum += wave * env * coeff * filt.x;
     }
 
-    dest += 0.25 * mix(0.8, 1.0, duck) * clip(4.0 * sum);
+    float bias = -0.4;
+    dest += 0.25 * mix(0.8, 1.0, duck) * (clip(4.0 * (sum + bias)) - bias);
   }
 
   return clip(1.3 * tanh(dest));
