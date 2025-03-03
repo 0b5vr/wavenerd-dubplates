@@ -25,7 +25,7 @@ const float P5 = pow(2.0, 7.0 / 12.0);
 // VIBE 2: 2.01 - hihat, fm perc, crash, bass
 // VIBE 3: 2.09 - hihat+, clap
 // VIBE 4: 3.01 - open hihat, snare roll, crash+
-// VIBE 5: 4.01 - ride, arp
+// VIBE 5: 4.01 - longer choir, ride, arp
 const int VIBE = 0;
 
 const int KICK_FILL = 0x8888;
@@ -40,7 +40,6 @@ const float TRANSPOSE = 3.0;
 
 // == { CHEATING ZONE END } ========================================================================
 
-uniform vec4 param_knob4; // choir length
 uniform vec4 param_knob7; // kick cut
 
 #define p4 paramFetch(param_knob4)
@@ -138,21 +137,23 @@ vec2 mainAudio(vec4 time) {
     float t = seq.y;
     float q = seq.w;
 
-    float env = smoothstep(0.3, 0.2, t);
-
-    env *= mix(1.0, exp2(-60.0 * t), p7);
-
-    vec2 wave = vec2(0.0);
-    vec2 phase = vec2(40.0 * t);
-    phase -= 9.0 * exp2(-25.0 * t);
-    phase -= 3.0 * exp2(-50.0 * t);
-    phase -= 3.0 * exp2(-500.0 * t);
-    wave += sin(TAU * phase);
-
-    dest += 0.5 * env * tanh(1.3 * wave);
-
     sidechain = smoothstep(0.0, 0.7 * B2T, time.x) * smoothstep(0.0, 0.01 * B2T, B2T - time.x);
     sidechain *= 0.5 + 0.5 * smoothstep(0.0, 0.7 * B2T, t) * smoothstep(0.0, 0.01 * B2T, q);
+
+    {
+      float env = smoothstep(0.3, 0.2, t);
+
+      env *= mix(1.0, exp2(-60.0 * t), p7);
+
+      vec2 wave = vec2(0.0);
+      vec2 phase = vec2(40.0 * t);
+      phase -= 9.0 * exp2(-25.0 * t);
+      phase -= 3.0 * exp2(-50.0 * t);
+      phase -= 3.0 * exp2(-500.0 * t);
+      wave += sin(TAU * phase);
+
+      dest += 0.5 * env * tanh(1.3 * wave);
+    }
   }
 
   if (VIBE >= 2) { // hihat
@@ -315,7 +316,7 @@ vec2 mainAudio(vec4 time) {
     }
 
     env *= mix(
-      smoothstep(0.6 * l, 0.4 * l, t - p4 * 0.4 * l),
+      smoothstep(0.6 * l, 0.4 * l, t - float(VIBE >= 5) * (0.4 * l)),
       exp2(-5.0 * t),
       0.1
     );
