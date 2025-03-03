@@ -32,9 +32,9 @@
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 
-uniform vec4 param_knob4; // oidos filter
+uniform vec4 param_knob7; // oidos filter
 
-#define p4 paramFetch(param_knob4)
+#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -62,12 +62,12 @@ vec2 mainAudio(vec4 time) {
     float lpfFreq = exp2(mix(
       log2(20.0),
       log2(22000.0),
-      linearstep(0.0, 0.5, p4)
+      linearstep(0.0, 0.5, p7)
     ));
     float hpfFreq = exp2(mix(
       log2(20.0),
       log2(22000.0),
-      linearstep(0.5, 1.0, p4)
+      linearstep(0.5, 1.0, p7)
     ));
 
     repeat(i, 2500) {
@@ -86,15 +86,15 @@ vec2 mainAudio(vec4 time) {
       amp *= smoothstep(
         1.0 + FILTER_WIDTH,
         1.0,
-        diceA.y + (1.0 + FILTER_WIDTH) * linearstep(0.5, 0.0, p4)
+        diceA.y + (1.0 + FILTER_WIDTH) * linearstep(0.5, 0.0, p7)
       );
       amp *= smoothstep(
         0.0 - FILTER_WIDTH,
         0.0,
-        diceA.y - (1.0 + FILTER_WIDTH) * linearstep(0.5, 1.0, p4)
+        diceA.y - (1.0 + FILTER_WIDTH) * linearstep(0.5, 1.0, p7)
       );
 
-      float pm = 0.2 * smoothstep(0.0, 0.5, p4) * smoothstep(1.0, 0.5, p4);
+      float pm = 0.2 * smoothstep(0.0, 0.5, p7) * smoothstep(1.0, 0.5, p7);
       phase += pm * fract(4.0 * phase); // add high freq
 
       sum += amp * env * sin(TAU * phase) / 1000.0;
