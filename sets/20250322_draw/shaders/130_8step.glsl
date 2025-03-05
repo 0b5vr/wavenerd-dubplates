@@ -350,9 +350,18 @@ vec2 mainAudio(vec4 time) {
     vec2 sum = vec2(0.0);
 
     int STEPS = 8;
-    float seqp[] = float[](0.47, 0.73, 0.21, 1.00, 0.02, 0.86, 0.89, 0.23);
-    float seqm[] = float[](0.51, 0.52, 0.12, 0.15, 0.31, 0.72, 0.93, 0.48);
-    float seqe[] = float[](0.40, 0.70, 0.20, 0.90, 0.10, 0.50, 0.80, 0.20);
+    vec4 vseq[] = vec4[](
+      //   freq  fm    env   fold
+      vec4(0.47, 0.51, 0.40, 0.00),
+      vec4(0.73, 0.52, 0.70, 0.00),
+      vec4(0.21, 0.12, 0.20, 0.00),
+      vec4(1.00, 0.15, 0.90, 0.00),
+      vec4(0.02, 0.31, 0.10, 0.00),
+      vec4(0.86, 0.72, 0.50, 0.00),
+      vec4(0.89, 0.93, 0.80, 0.00),
+      vec4(0.23, 0.48, 0.20, 0.00),
+      vec4(0.00, 0.00, 0.00, 0.00)
+    );
 
     repeat(i, 3) {
       float fi = float(i);
@@ -367,20 +376,25 @@ vec2 mainAudio(vec4 time) {
       int sip = (si + STEPS - 1) % STEPS;
 
       float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
-      env *= exp2(-exp2(7.0 - 5.0 * seqe[si]) * t);
+      env *= exp2(-exp2(7.0 - 5.0 * vseq[si].z) * t);
 
-      float phase;
-      {
-        float p0 = 40.0 + 38.0 * seqp[sip];
-        float p1 = 40.0 + 38.0 * seqp[si];
-        phase = glidephase(t, 0.01, p0, p1);
+      float phase = 0.0;
+      { // osc
+        float p0 = 40.0 + 38.0 * vseq[sip].x;
+        float p1 = 40.0 + 38.0 * vseq[si].x;
+        phase += glidephase(t, 0.01, p0, p1);
       }
-      {
-        float p0 = 50.0 + 17.0 * seqm[sip];
-        float p1 = 50.0 + 17.0 * seqm[si];
+      { // fm
+        float p0 = 50.0 + 17.0 * vseq[sip].y;
+        float p1 = 50.0 + 17.0 * vseq[si].y;
         phase += 0.1 * env * sin(TAU * glidephase(t, 0.01, p0, p1));
       }
       vec2 wave = cis(TAU * phase);
+      { // wavefold
+        float a0 = exp2(4.0 * vseq[sip].w);
+        float a1 = exp2(4.0 * vseq[si].w);
+        wave = sin(mix(a0, a1, linearstep(0.0, 0.01, t)) * wave);
+      }
 
       sum += delaydecay * env * tanh(4.0 * wave);
     }
