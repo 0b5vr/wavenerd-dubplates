@@ -328,6 +328,14 @@ vec2 mainAudioDry(vec4 time) {
   //   dest += 0.05 * env * mix(0.3, 1.0, duck) * tanh(2.0 * sum);
   // }
 
+  // { // crash
+  //   float t = mod(time.z, 64.0 * B2T);
+
+  //   float env = mix(exp(-t), exp(-5.0 * t), 0.7);
+  //   vec2 wave = shotgun(3800.0 * t, 1.5, 0.0, 3.0);
+  //   dest += 0.3 * mix(0.2, 1.0, duck) * env * tanh(8.0 * wave);
+  // }
+
   #ifdef LFG
     { // snare909
       float fade = smoothstep(32.0 * B2T, 64.0 * B2T, time.z);
@@ -376,14 +384,6 @@ vec2 mainAudioDry(vec4 time) {
       dest += 0.07 * env * wave;
     }
   #endif
-
-  // { // crash
-  //   float t = mod(time.z, 64.0 * B2T);
-
-  //   float env = mix(exp(-t), exp(-5.0 * t), 0.7);
-  //   vec2 wave = shotgun(3800.0 * t, 1.5, 0.0, 3.0);
-  //   dest += 0.3 * mix(0.2, 1.0, duck) * env * tanh(8.0 * wave);
-  // }
 
   { // choir
     float l = 16.0 * B2T;
