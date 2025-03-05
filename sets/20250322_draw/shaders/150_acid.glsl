@@ -19,11 +19,13 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float P5 = pow(2.0, 7.0 / 12.0);
 
+uniform vec4 param_knob3; // snare roll
 uniform vec4 param_knob4; // acid cutoff
 uniform vec4 param_knob5; // acid reso
 uniform vec4 param_knob6; // acid centroid
 uniform vec4 param_knob7; // kick cut
 
+#define p3 paramFetch(param_knob3)
 #define p4 paramFetch(param_knob4)
 #define p5 paramFetch(param_knob5)
 #define p6 paramFetch(param_knob6)
@@ -383,6 +385,41 @@ vec2 mainAudio(vec4 time) {
   //   vec2 wave = shotgun(3800.0 * t, 2.0, 0.0, 1.0);
   //   dest += 0.4 * env * mix(0.5, 1.0, duck) * tanh(8.0 * wave);
   // }
+
+  { // snare roll
+    float fade = smoothstep(32.0 * B2T, 64.0 * B2T, time.z);
+
+    vec4 seq = seq16(time.y, 0xffff);
+    float t = seq.t;
+    float q = seq.q;
+
+    if (time.z > 60.0 * B2T) {
+      float l = 0.125 * B2T;
+      t = mod(time.x, l);
+      q = l - t;
+    }
+
+    float env = smoothstep(0.0, 0.01, q);
+    env *= mix(
+      exp(-10.0 * max(t - 0.04, 0.0)),
+      exp(-80.0 * t),
+      0.3
+    );
+
+    float sinphase = 234.0 * t - 4.0 * exp2(-t * 200.0);
+    float noisephase = 128.0 * t;
+    vec2 wave = mix(
+      mix(
+        cis(TAU * (sinphase)),
+        cis(TAU * (1.5 * sinphase)),
+        0.3
+      ),
+      cheapnoise(noisephase) - cheapnoise(noisephase - 0.004),
+      0.3
+    );
+
+    dest += 0.3 * p3 * fade * mix(0.3, 1.0, duck) * tanh(4.0 * env * wave);
+  }
 
   { // acid
     const int N_NOTES = 5;
