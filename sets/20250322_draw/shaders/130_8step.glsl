@@ -311,39 +311,17 @@ vec2 mainAudio(vec4 time) {
     dest += 0.17 * mix(0.2, 1.0, sidechain) * env * tanh(8.0 * wave);
   }
 
-  { // snare roll
-    float fade = smoothstep(32.0 * B2T, 64.0 * B2T, time.z);
+  if (time.z > 32.0 * B2T) { // sweep
+    float t = tmod(time, 32.0 * B2T);
 
-    vec4 seq = seq16(time.y, 0xffff);
-    float t = seq.t;
-    float q = seq.q;
+    float env = smoothstep(0.0, 32.0 * B2T, t);
 
-    if (time.z > 60.0 * B2T) {
-      float l = 0.125 * B2T;
-      t = mod(time.x, l);
-      q = l - t;
-    }
+    vec2 wave = vec2(0.0);
+    wave += cheapnoise(128.0 * t);
+    wave += cheapnoise(128.0 * (t + 0.004 * exp(-0.2 * t)));
+    wave += cheapnoise(128.0 * (t + 0.008 * exp(-0.2 * t)));
 
-    float env = smoothstep(0.0, 0.01, q);
-    env *= mix(
-      exp(-10.0 * max(t - 0.04, 0.0)),
-      exp(-80.0 * t),
-      0.3
-    );
-
-    float sinphase = 211.0 * t - 4.0 * exp2(-t * 200.0);
-    float noisephase = 128.0 * t;
-    vec2 wave = mix(
-      mix(
-        cis(TAU * (sinphase)),
-        cis(TAU * (1.5 * sinphase)),
-        0.3
-      ),
-      cheapnoise(noisephase) - cheapnoise(noisephase - 0.004),
-      0.3
-    );
-
-    dest += 0.3 * p3 * fade * mix(0.2, 1.0, sidechain) * tanh(3.0 * env * wave);
+    dest += p3 * 0.07 * mix(0.2, 1.0, sidechain) * env * wave;
   }
 
   { // modshit
