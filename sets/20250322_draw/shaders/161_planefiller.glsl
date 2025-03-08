@@ -25,7 +25,7 @@ const float P5 = pow(2.0, 7.0 / 12.0);
 // VIBE 2: 2.01 - hihat, fm perc, crash, bass
 // VIBE 3: 2.09 - hihat+, clap
 // VIBE 4: 3.01 - open hihat, snare roll, crash+
-// VIBE 5: 4.01 - longer choir, ride, arp
+// VIBE 5: 4.01 - ride, arp
 const int VIBE = 0;
 
 const int KICK_FILL = 0x8888;
@@ -35,6 +35,7 @@ const int KICK_FILL = 0x8888;
 // const int KICK_FILL = 0xa18e;
 
 const int SNARE_ROLL_LONGER = 1;
+const int CHOIR_LONGER = 0;
 
 const float TRANSPOSE = 3.0;
 
@@ -316,7 +317,7 @@ vec2 mainAudio(vec4 time) {
     }
 
     env *= mix(
-      smoothstep(0.6 * l, 0.4 * l, t - float(VIBE >= 5) * (0.4 * l)),
+      smoothstep(0.6 * l, 0.4 * l, t - float(CHOIR_LONGER) * (0.4 * l)),
       exp2(-5.0 * t),
       0.1
     );
