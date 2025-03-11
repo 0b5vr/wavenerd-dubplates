@@ -41,10 +41,9 @@ const float TRANSPOSE = 3.0;
 
 // == { CHEATING ZONE END } ========================================================================
 
-uniform vec4 param_knob7; // kick cut
+uniform vec4 param_knob3; // kick cut
 
-#define p4 paramFetch(param_knob4)
-#define p7 paramFetch(param_knob7)
+#define p3 paramFetch(param_knob3)
 
 // https://www.shadertoy.com/view/XlXcW4
 vec3 hash3f(vec3 s) {
@@ -144,7 +143,7 @@ vec2 mainAudio(vec4 time) {
     {
       float env = smoothstep(0.3, 0.2, t);
 
-      env *= mix(1.0, exp2(-60.0 * t), p7);
+      env *= mix(1.0, exp2(-60.0 * t), p3);
 
       vec2 wave = vec2(0.0);
       vec2 phase = vec2(40.0 * t);

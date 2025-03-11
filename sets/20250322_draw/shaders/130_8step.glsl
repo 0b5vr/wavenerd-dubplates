@@ -20,11 +20,11 @@ const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob3; // snare roll
-uniform vec4 param_knob7; // kick cut
+uniform vec4 param_knob2; // sweep
+uniform vec4 param_knob3; // kick cut
 
+#define p2 paramFetch(param_knob2)
 #define p3 paramFetch(param_knob3)
-#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -183,7 +183,7 @@ vec2 mainAudio(vec4 time) {
     sidechain = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
     float env = smoothstep(0.0, 0.001, q) * smoothstep(2.0 * B2T, 0.1 * B2T, t);
-      env *= mix(1.0, exp2(-70.0 * t), p7);
+      env *= mix(1.0, exp2(-70.0 * t), p3);
 
     {
       float wave = sin(TAU * (
@@ -321,7 +321,7 @@ vec2 mainAudio(vec4 time) {
     wave += cheapnoise(128.0 * (t + 0.004 * exp(-0.2 * t)));
     wave += cheapnoise(128.0 * (t + 0.008 * exp(-0.2 * t)));
 
-    dest += p3 * 0.07 * mix(0.2, 1.0, sidechain) * env * wave;
+    dest += p2 * 0.07 * mix(0.2, 1.0, sidechain) * env * wave;
   }
 
   { // modshit

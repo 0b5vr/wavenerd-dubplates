@@ -19,13 +19,13 @@ const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob0; // chord volume
 uniform vec4 param_knob1; // pluck volume
+uniform vec4 param_knob3; // kick cut
 uniform vec4 param_knob5; // pluck envelope
-uniform vec4 param_knob7; // kick cut
 
 #define p0 paramFetch(param_knob0)
 #define p1 paramFetch(param_knob1)
+#define p3 paramFetch(param_knob3)
 #define p5 paramFetch(param_knob5)
-#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -222,7 +222,7 @@ vec2 mainAudio(vec4 time) {
   //   );
 
   //   float env = smoothstep(0.0, 0.001, q) * exp(-20.0 * max(t - 0.12, 0.0));
-  //   env *= mix(1.0, exp(-50.0 * t), p7);
+  //   env *= mix(1.0, exp(-50.0 * t), p3);
 
   //   float tt = t;
   //   float wave = 0.0;

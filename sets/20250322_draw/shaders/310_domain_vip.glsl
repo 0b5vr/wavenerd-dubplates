@@ -25,11 +25,11 @@ const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob0; // pad amp
 uniform vec4 param_knob1; // arp amp
-uniform vec4 param_knob7; // kick cut
+uniform vec4 param_knob3; // kick cut
 
 #define p0 paramFetch(param_knob0)
 #define p1 paramFetch(param_knob1)
-#define p7 paramFetch(param_knob7)
+#define p3 paramFetch(param_knob3)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -160,7 +160,7 @@ vec2 mainAudioDry(vec4 time) {
   //   #ifdef LFG
   //     env *= fillIn ? 1.0 : exp(-70.0 * t);
   //   #else
-  //     env *= mix(1.0, exp(-70.0 * t), p7);
+  //     env *= mix(1.0, exp(-70.0 * t), p3);
   //   #endif
 
   //   {

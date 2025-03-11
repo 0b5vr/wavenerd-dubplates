@@ -20,12 +20,12 @@ const float TAU = PI * 2.0;
 const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob0; // pad level
+uniform vec4 param_knob3; // kick cut
 uniform vec4 param_knob4; // pluck fm modulator
-uniform vec4 param_knob7; // kick cut
 
 #define p0 paramFetch(param_knob0)
 #define p4 paramFetch(param_knob4)
-#define p7 paramFetch(param_knob7)
+#define p3 paramFetch(param_knob3)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -223,19 +223,19 @@ vec2 mainAudio(vec4 time) {
 
     {
       float env = smoothstep(0.0, 0.001, q) * exp(-20.0 * max(t - 0.1, 0.0));
-      env *= mix(1.0, exp(-50.0 * t), p7);
-  
+      env *= mix(1.0, exp(-50.0 * t), p3);
+
       float phase = TAU * (
         48.0 * t
         - 2.0 * exp2(-t * 40.0)
         - 3.0 * exp2(-t * 90.0)
       );
-  
+
       float wave = tanh(1.5 * sin(phase));
-  
+
       float tick = env * exp2(-500.0 * t);
       wave += env * tanh(1.5 * sin(TAU * 3.0 * tick));
-  
+
       dest += 0.6 * env * wave;
     }
   }

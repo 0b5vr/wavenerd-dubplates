@@ -17,10 +17,10 @@ const float p5=exp2(7./12.);
 const uint uint_max=0xffffffffu;
 
 uniform vec4 param_knob0; // pad level
-uniform vec4 param_knob7; // kick cut
+uniform vec4 param_knob3; // kick cut
 
 #define p0 paramFetch(param_knob0)
-#define p7 paramFetch(param_knob7)
+#define p3 paramFetch(param_knob3)
 
 uvec3 pcg3d(uvec3 v){
   v=v*1145141919u+1919810u;
@@ -123,7 +123,7 @@ vec2 mainAudio(vec4 time){
 
     if(time.z<61.*b2t){
       float env=linearstep(0.3,0.1,t);
-      env*=mix(1.,exp(-100.*t),p7);
+      env*=mix(1.,exp(-100.*t),p3);
 
       dest+=.6*env*tanh(2.*sin(
         310.*t-55.*exp(-30.*t)

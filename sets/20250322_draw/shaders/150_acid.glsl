@@ -19,17 +19,17 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob3; // snare roll
+uniform vec4 param_knob2; // snare roll
+uniform vec4 param_knob3; // kick cut
 uniform vec4 param_knob4; // acid cutoff
 uniform vec4 param_knob5; // acid reso
 uniform vec4 param_knob6; // acid centroid
-uniform vec4 param_knob7; // kick cut
 
+#define p2 paramFetch(param_knob2)
 #define p3 paramFetch(param_knob3)
 #define p4 paramFetch(param_knob4)
 #define p5 paramFetch(param_knob5)
 #define p6 paramFetch(param_knob6)
-#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -219,7 +219,7 @@ vec2 mainAudio(vec4 time) {
     );
 
     float env = smoothstep(0.0, 0.001, q) * exp(-20.0 * max(t - 0.1, 0.0));
-    env *= mix(1.0, exp(-50.0 * t), p7);
+    env *= mix(1.0, exp(-50.0 * t), p3);
 
     // {
     //   float tt = t;
@@ -418,7 +418,7 @@ vec2 mainAudio(vec4 time) {
       0.3
     );
 
-    dest += 0.3 * p3 * fade * mix(0.3, 1.0, duck) * tanh(4.0 * env * wave);
+    dest += 0.3 * p2 * fade * mix(0.3, 1.0, duck) * tanh(4.0 * env * wave);
   }
 
   { // acid

@@ -15,15 +15,15 @@ const float LN2 = log(2.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
+uniform vec4 param_knob3; // kick cut
 uniform vec4 param_knob4; // riff cutoff
 uniform vec4 param_knob5; // riff metal
 uniform vec4 param_knob6; // riff centroid
-uniform vec4 param_knob7; // kick cut
 
+#define p3 paramFetch(param_knob3)
 #define p4 paramFetch(param_knob4)
 #define p5 paramFetch(param_knob5)
 #define p6 paramFetch(param_knob6)
-#define p7 paramFetch(param_knob7)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1664525u + 1013904223u;
@@ -181,7 +181,7 @@ vec2 mainAudio(vec4 time) {
     sidechain = 0.2 + 0.8 * smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
 
     float env = smoothstep(0.0, 0.001, q) * smoothstep(2.0 * B2T, 0.1 * B2T, t);
-    env *= mix(1.0, exp(-70.0 * t), p7);
+    env *= mix(1.0, exp(-70.0 * t), p3);
 
     {
       float wave = sin(

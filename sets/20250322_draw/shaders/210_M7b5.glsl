@@ -20,9 +20,9 @@ const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob7; // kick cut
+uniform vec4 param_knob3; // kick cut
 
-#define p7 paramFetch(param_knob7)
+#define p3 paramFetch(param_knob3)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -218,7 +218,7 @@ vec2 mainAudio(vec4 time) {
   //   duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
   //   float env = smoothstep(0.0, 0.001, q) * exp2(-20.0 * max(t - 0.1, 0.0));
-  //   env *= mix(1.0, exp2(-40.0 * t), p7);
+  //   env *= mix(1.0, exp2(-40.0 * t), p3);
 
   //   {
   //     float envd = mix(1.0, 0.7, step(6.0, mod(seq.s, 8.0)));

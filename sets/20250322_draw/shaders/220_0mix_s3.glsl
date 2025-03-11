@@ -20,9 +20,9 @@ const float p4=exp2(5./12.);
 const float p5=exp2(7./12.);
 const uint uint_max=0xffffffffu;
 
-uniform vec4 param_knob7; // kick cut
+uniform vec4 param_knob3; // kick cut
 
-#define p7 paramFetch(param_knob7)
+#define p3 paramFetch(param_knob3)
 
 uvec3 pcg3d(uvec3 v){
   v=v*1145141919u+1919810u;
@@ -158,7 +158,7 @@ vec2 mainAudio(vec4 time){
 
     {
       float env=linearstep(.0,.001,t)*linearstep(.0,.01,q)*linearstep(0.3,0.1,t);
-      env *= mix(1.0, exp2(-90.0 * t), p7);
+      env *= mix(1.0, exp2(-90.0 * t), p3);
 
       float wave=mix(
         sin(300.*t-65.*exp(-80.*t)),

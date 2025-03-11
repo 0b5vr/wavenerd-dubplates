@@ -18,10 +18,6 @@ const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
 
-uniform vec4 param_knob4; // choir length
-
-#define p4 paramFetch(param_knob4)
-
 // https://www.shadertoy.com/view/XlXcW4
 vec3 hash3f(vec3 s) {
   uvec3 r = floatBitsToUint(s);
