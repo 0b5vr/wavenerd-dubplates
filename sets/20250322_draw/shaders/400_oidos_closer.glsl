@@ -18,8 +18,8 @@
 // - 🔊 Demoscene techno headz! mfx, Epoch, luchak, chlumpie, dok & jon
 // - 🗜️ The 64k scene! Conspiracy, farbrausch, Logicoma, Mercury
 // - ✨️ The 4k scene! 0x4015, iq, LJ & Virgill, Blueberry, pestis
-// - 💻️ Atsushi Tadokoro, moistpeace, yaxu, Algorave
-// - 🎛️ Yebisu303, Nyolfen, fendoap, DJ SHARPNEL, Elektron, Dirtywave
+// - 💻️ lactoice, Niko_14, Atsushi Tadokoro, moistpeace, yaxu, Algorave
+// - 🎛️ Denkitribe, Yebisu303, Nyolfen, fendoap, DJ SHARPNEL, Elektron, Dirtywave
 
 #define S2T (15.0 / bpm)
 #define B2T (60.0 / bpm)
