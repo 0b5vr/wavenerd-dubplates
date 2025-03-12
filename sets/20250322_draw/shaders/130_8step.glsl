@@ -341,6 +341,11 @@ vec2 mainAudio(vec4 time) {
       vec4(0.00, 0.00, 0.00, 0.00)
     );
 
+    #define FN_OSC(x) mix(40.0, 78.0, (x))
+    #define FN_FM(x) mix(50.0, 67.0, (x))
+    #define FN_ENV(x) -exp2(mix(7.0, 2.0, (x)))
+    #define FN_FOLD(x) exp2(4.0 * (x))
+
     repeat(i, 3) {
       float fi = float(i);
       float delayoff = 2.0 * S2T * fi;
@@ -354,23 +359,23 @@ vec2 mainAudio(vec4 time) {
       int sip = (si + STEPS - 1) % STEPS;
 
       float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
-      env *= exp2(-exp2(7.0 - 5.0 * vseq[si].z) * t);
+      env *= exp2(FN_ENV(vseq[si].z) * t);
 
       float phase = 0.0;
       { // osc
-        float p0 = 40.0 + 38.0 * vseq[sip].x;
-        float p1 = 40.0 + 38.0 * vseq[si].x;
+        float p0 = FN_OSC(vseq[sip].x);
+        float p1 = FN_OSC(vseq[si].x);
         phase += glidephase(t, 0.01, p0, p1);
       }
       { // fm
-        float p0 = 50.0 + 17.0 * vseq[sip].y;
-        float p1 = 50.0 + 17.0 * vseq[si].y;
+        float p0 = FN_FM(vseq[sip].y);
+        float p1 = FN_FM(vseq[si].y);
         phase += 0.1 * env * sin(TAU * glidephase(t, 0.01, p0, p1));
       }
       vec2 wave = cis(TAU * phase);
       { // wavefold
-        float a0 = exp2(4.0 * vseq[sip].w);
-        float a1 = exp2(4.0 * vseq[si].w);
+        float a0 = FN_FOLD(vseq[sip].w);
+        float a1 = FN_FOLD(vseq[si].w);
         wave = sin(mix(a0, a1, linearstep(0.0, 0.01, t)) * wave);
       }
 
