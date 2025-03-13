@@ -121,33 +121,6 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
   return sum / 64.0;
 }
 
-vec2 spray(float t, float freq, float spread, float seed, float interval, int count) {
-  float grainLength = float(count) * interval;
-
-  vec2 sum = vec2(0.0);
-  repeat(i, count) {
-    float fi = float(i);
-
-    float off = -interval * fi;
-    float tg = mod(t + off, grainLength);
-    float prog = tg / grainLength;
-
-    vec3 dice = hash3f(vec3(i, lofi(t + off, grainLength), seed));
-    vec2 dicen = boxMuller(dice.xy);
-
-    float envg = smoothstep(0.0, 0.5, prog) * smoothstep(1.0, 0.5, prog);
-
-    vec2 phase = vec2(freq * t);
-    phase *= exp2(spread * dicen.xy);
-    phase += dice.xy;
-
-    vec2 wave = sin(TAU * phase);
-    sum += 2.0 * envg * wave;
-  }
-
-  return sum / float(count);
-}
-
 mat3 orthBas(vec3 z) {
   z = normalize(z);
   vec3 x = normalize(cross(vec3(0, 1, 0), z));

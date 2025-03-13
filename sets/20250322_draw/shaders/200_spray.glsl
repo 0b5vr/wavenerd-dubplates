@@ -103,7 +103,7 @@ vec2 spray(float t, float freq, float spread, float seed, float interval, int co
     float tg = mod(t + off, grainLength);
     float prog = tg / grainLength;
 
-    vec3 dice = hash3f(vec3(i, lofi(t + off, grainLength), seed));
+    vec3 dice = hash3f(vec3(i, floor((t + off) / grainLength), seed));
     vec2 dicen = boxMuller(dice.xy);
 
     float envg = smoothstep(0.0, 0.5, prog) * smoothstep(1.0, 0.5, prog);
