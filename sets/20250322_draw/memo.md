@@ -16,7 +16,6 @@
   - planefiller
 - unusual and dirty zone
   - spray techno
-  - M7b5
   - 0mix section 3
 - go emotional
   - 0mix section 4
@@ -24,9 +23,3 @@
   - airy house
   - oidos closer
 ```
-
-## 難所
-
-- planefiller, break -> drop
-- domain vip, introduce the choir
-- domain vip, break -> drop

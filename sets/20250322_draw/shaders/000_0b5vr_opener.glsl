@@ -10,6 +10,10 @@
 //                                                                                   
 //                            0b5vr x Renard x ukonpower                             
 
+// 0b5vr: Audio, System (Wavenerd), Concept
+// ukonpower: Visual, WebGL Wizard, Procedural Takoyaki Chef
+// Renard: Visual, Video Modulator, Codec Destroyer
+
 #define S2T (15.0 / bpm)
 #define B2T (60.0 / bpm)
 #define ZERO min(0, int(bpm))
