@@ -11,7 +11,7 @@
 #define tri(p) (1.-4.*abs(fract(p-0.25)-0.5))
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
 
-const float SWING = 0.52;
+const float SWING = 0.64; // -> 0.52
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
@@ -19,6 +19,10 @@ const float LN2 = log(2.0);
 const float MIN3 = pow(2.0, 3.0 / 12.0);
 const float P4 = pow(2.0, 5.0 / 12.0);
 const float P5 = pow(2.0, 7.0 / 12.0);
+
+uniform vec4 param_knob3; // kick cut
+
+#define p3 paramFetch(param_knob3)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -88,39 +92,6 @@ vec4 seq16(float t, int seq) {
   );
 }
 
-float glidephase(float t, float t1, float p0, float p1) {
-  if (p0 == p1 || t1 == 0.0) {
-    return t * p2f(p1);
-  }
-
-  float m0 = (p0 - 69.0) / 12.0;
-  float m1 = (p1 - 69.0) / 12.0;
-  float b = (m1 - m0) / t1;
-
-  return (
-    + p2f(p0) * (
-      + min(t, 0.0)
-      + (pow(2.0, b * clamp(t, 0.0, t1)) - 1.0) / b / LN2
-    )
-    + max(0.0, t - t1) * p2f(p1)
-  );
-}
-
-vec2 shotgun(float t, float spread, float snap, float fm) {
-  vec2 sum = vec2(0.0);
-
-  repeat(i, 64) {
-    vec3 dice = hash3f(vec3(i + 1));
-
-    vec2 partial = exp2(spread * dice.xy);
-    partial = mix(partial, floor(partial + 0.5), snap);
-
-    sum += sin(TAU * t * partial + fm * sin(TAU * t * partial));
-  }
-
-  return sum / 64.0;
-}
-
 vec2 spray(float t, float freq, float spread, float seed, float interval, int count) {
   float grainLength = float(count) * interval;
 
@@ -148,77 +119,6 @@ vec2 spray(float t, float freq, float spread, float seed, float interval, int co
   return sum / float(count);
 }
 
-mat3 orthBas(vec3 z) {
-  z = normalize(z);
-  vec3 x = normalize(cross(vec3(0, 1, 0), z));
-  vec3 y = cross(z, x);
-  return mat3(x, y, z);
-}
-
-vec3 cyclic(vec3 p, float pers, float lacu) {
-  vec4 sum = vec4(0);
-  mat3 rot = orthBas(vec3(2, -3, 1));
-
-  for (int i = 0; i ++ < 5;) {
-    p *= rot;
-    p += sin(p.zxy);
-    sum += vec4(cross(cos(p), sin(p.yzx)), 1);
-    sum /= pers;
-    p *= lacu;
-  }
-
-  return sum.xyz / sum.w;
-}
-
-float cheapfiltersaw(float phase, float k) {
-  float wave = fract(phase);
-  float c = smoothstep(1.0, 0.0, wave / (1.0 - k));
-  return (wave + c - 1.0) * 2.0 + k;
-}
-
-vec2 cheapnoise(float t) {
-  uvec3 s=uvec3(t * 256.0);
-  float p=fract(t * 256.0);
-
-  vec3 dice;
-  vec2 v = vec2(0.0);
-
-  dice=vec3(hash3u(s + 0u)) / float(-1u) - vec3(0.5, 0.5, 0.0);
-  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-  dice=vec3(hash3u(s + 1u)) / float(-1u) - vec3(0.5, 0.5, 1.0);
-  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-  dice=vec3(hash3u(s + 2u)) / float(-1u) - vec3(0.5, 0.5, 2.0);
-  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-
-  return 2.0 * v;
-}
-
-vec2 ladderLPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 4.0 * omega * (omegaSq - 1.0);
-  float b = 4.0 * reso + omegaSq * omegaSq - 6.0 * omegaSq + 1.0;
-
-  return vec2(
-    1.0 / sqrt(a * a + b * b),
-    atan(a, b)
-  );
-}
-
-vec2 twoPoleHPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 2.0 * (1.0 - reso) * omega;
-  float b = omegaSq - 1.0;
-
-  return vec2(
-    omegaSq / sqrt(a * a + b * b),
-    atan(a, b)
-  );
-}
-
 vec2 mainAudio(vec4 time) {
   vec2 dest = vec2(0);
   float duck = 1.0;
@@ -230,71 +130,68 @@ vec2 mainAudio(vec4 time) {
     duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
     float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
+    env *= mix(1.0, exp2(-40.0 * t), p3);
 
     // {
-    //   env *= exp(-60.0 * t);
+    //   float wave = sin(TAU * (
+    //     45.0 * t
+    //     - 1.0 * exp2(-t * 20.0)
+    //     - mix(4.0, 5.0, mod(seq.s, 8.0) != 3.0) * exp2(-t * 60.0)
+    //   ));
+    //   dest += 0.6 * clip(2.0 * tri(0.40 * env * wave));
     // }
-
-    {
-      float wave = sin(TAU * (
-        45.0 * t
-        - 1.0 * exp2(-t * 20.0)
-        - mix(4.0, 5.0, mod(seq.s, 8.0) != 3.0) * exp2(-t * 60.0)
-      ));
-      dest += 0.6 * clip(2.0 * tri(0.40 * env * wave));
-    }
   }
 
-  { // sub kick
-    vec4 seq = seq16(time.y, 0xffff);
-    float t = seq.t;
-    float q = seq.q;
+  // { // sub kick
+  //   vec4 seq = seq16(time.y, 0xffff);
+  //   float t = seq.t;
+  //   float q = seq.q;
 
-    float env = smoothstep(0.0, 0.01, t) * smoothstep(0.0, 0.01, q);
+  //   float env = smoothstep(0.0, 0.01, t) * smoothstep(0.0, 0.01, q);
 
-    {
-      float wave = sin(TAU * (
-        42.0 * t
-        - 4.0 * exp2(-t * 40.0)
-      ));
-      dest += 0.4 * duck * tanh(2.0 * env * wave);
-    }
-  }
+  //   {
+  //     float wave = sin(TAU * (
+  //       42.0 * t
+  //       - 4.0 * exp2(-t * 40.0)
+  //     ));
+  //     dest += 0.4 * duck * tanh(2.0 * env * wave);
+  //   }
+  // }
 
-  { // rumble
-    vec4 seq = seq16(time.y, 0x8888);
-    float t = seq.t;
-    float q = seq.q;
+  // { // rumble
+  //   vec4 seq = seq16(time.y, 0x8888);
+  //   float t = seq.t;
+  //   float q = seq.q;
 
-    float env = smoothstep(0.0, 0.01, t) * smoothstep(0.0, 0.01, q);
+  //   float env = smoothstep(0.0, 0.01, t) * smoothstep(0.0, 0.01, q);
 
-    vec2 wave = spray(t, 90.0, 0.5, 0.0, 0.01, 4);
-    wave = mix(wave, vec2(dot(wave, vec2(0.5))), 0.5);
-    dest += 0.2 * duck * env * tanh(3.0 * wave);
-  }
+  //   vec2 wave = spray(t, 90.0, 0.5, 0.0, 0.01, 4);
+  //   wave = mix(wave, vec2(dot(wave, vec2(0.5))), 0.5);
+  //   dest += 0.2 * duck * env * tanh(3.0 * wave);
+  // }
 
-  { // hihat
-    float st;
-    vec4 seq = seq16(time.y, 0xffff);
-    float t = seq.t;
-    float q = seq.q;
+  // { // hihat
+  //   float st;
+  //   vec4 seq = seq16(time.y, 0xffff);
+  //   float t = seq.t;
+  //   float q = seq.q;
 
-    float env = exp(-exp2(5.0) * t) * smoothstep(0.0, 0.01, q);
-    vec2 wave = spray(t, 8000.0, 0.4, 0.0, 0.001, 64);
-    dest += 0.15 * env * mix(0.3, 1.0, duck) * tanh(8.0 * wave);
-  }
+  //   float env = exp(-exp2(5.0) * t) * smoothstep(0.0, 0.01, q);
+  //   vec2 wave = spray(t, 8000.0, 0.4, 0.0, 0.001, 64);
+  //   dest += 0.15 * env * mix(0.3, 1.0, duck) * tanh(8.0 * wave);
+  // }
 
-  { // clap
-    float st;
-    vec4 seq = seq16(time.y, 0x2346);
-    float t = seq.t;
-    float q = seq.q;
+  // { // clap
+  //   float st;
+  //   vec4 seq = seq16(time.y, 0x2346);
+  //   float t = seq.t;
+  //   float q = seq.q;
 
-    float env = smoothstep(0.0, 0.01, q);
-    env *= exp(-30.0 * t);
-    vec2 wave = spray(t, 1400.0, 0.5, 4.0, 0.002, 8);
-    dest += 0.4 * env * mix(0.7, 1.0, duck) * tanh(4.0 * wave);
-  }
+  //   float env = smoothstep(0.0, 0.01, q);
+  //   env *= exp(-30.0 * t);
+  //   vec2 wave = spray(t, 1400.0, 0.5, 4.0, 0.002, 8);
+  //   dest += 0.4 * env * mix(0.7, 1.0, duck) * tanh(4.0 * wave);
+  // }
 
   // { // ride
   //   float st;
