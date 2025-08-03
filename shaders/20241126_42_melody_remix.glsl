@@ -9,7 +9,7 @@
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
 #define repeat(i, n) for (int i = ZERO; i < n; i++)
 
-const float SWING = 0.6;
+const float SWING = 0.66;
 
 const float LN2 = log(2.0);
 const float PI = acos(-1.0);
@@ -320,7 +320,7 @@ vec2 mainAudio(vec4 time) {
         sum += vec2(wave) * rotate2D(2.5 * fi);
       }
 
-      dest += 0.05 * mix(0.2, 1.0, duck) * env * sum;
+      dest += 0.4 * mix(0.2, 1.0, duck) * env * tanh(0.12 * sum);
     }
 
     { // arp
@@ -330,7 +330,7 @@ vec2 mainAudio(vec4 time) {
       float phase = TAU * lofi(t * freq, 1.0 / 16.0);
 
       float z = mix(14.0, 3.0, prog);
-      vec2 wave = cyclic(vec3(cis(phase), z), 0.5, 2.0).xy * rotate2D(0.01 * phase);
+      vec2 wave = cyclic(vec3(cis(phase), z), 0.5, 2.0).xy * rotate2D(TAU * 2.0 * time.w);
 
       dest += 0.2 * duck * env * wave;
     }
