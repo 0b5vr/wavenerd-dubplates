@@ -13,7 +13,7 @@
 #define repeat(i, n) for (int i = ZERO; i < n; i++)
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
 
-const float SWING = 0.54;
+const float SWING = 0.5;
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
@@ -358,30 +358,30 @@ vec2 mainAudio(vec4 time) {
     dest += 0.4 * mix(0.2, 1.0, duck) * crash(t, q);
   }
 
-  { // bonus: bass
-    float t = time.x;
-    float q = B2T - time.x;
+  // { // bonus: bass
+  //   float t = time.x;
+  //   float q = B2T - time.x;
 
-    // envelope
-    float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
+  //   // envelope
+  //   float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
 
-    // pitch, frequency, and phase
-    float pitch = time.y < 3.0 * B2T ? 30.0 : 40.0;
-    float freq = p2f(pitch);
-    float phase = freq * t;
+  //   // pitch, frequency, and phase
+  //   float pitch = time.y < 3.0 * B2T ? 30.0 : 40.0;
+  //   float freq = p2f(pitch);
+  //   float phase = freq * t;
 
-    // add phase modulation to phase
-    float fmamp = 0.2 * smoothstep(0.0, B2T, t);
-    phase += fmamp * sin(2.0 * TAU * phase);
+  //   // add phase modulation to phase
+  //   float fmamp = 0.2 * smoothstep(0.0, B2T, t);
+  //   phase += fmamp * sin(2.0 * TAU * phase);
 
-    // oscillator - sinewave
-    float osc = sin(TAU * phase);
+  //   // oscillator - sinewave
+  //   float osc = sin(TAU * phase);
 
-    // add overdrive to osc
-    osc = tanh(4.0 * osc);
+  //   // add overdrive to osc
+  //   osc = tanh(4.0 * osc);
 
-    dest += 0.2 * mix(0.0, 1.0, duck) * env * osc;
-  }
+  //   dest += 0.2 * mix(0.0, 1.0, duck) * env * osc;
+  // }
 
   // master dynamics - clip + tanh
   return clip(1.3 * tanh(dest));
