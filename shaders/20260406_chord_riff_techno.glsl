@@ -66,12 +66,7 @@ float tmod(vec4 time, float d) {
 
 float t2sSwing(float t) {
   float st = 4.0 * t / B2T;
-  float st2 = mod(st, 2.0);
-  return (
-    st - st2
-    + linearstep(0.0, 2.0 * SWING, st2)
-    + linearstep(2.0 * SWING, 2.0, st2)
-  );
+  return 2.0 * floor(st / 2.0) + step(SWING, fract(0.5 * st));
 }
 
 float s2tSwing(float st) {
@@ -383,41 +378,14 @@ vec2 mainAudio(vec4 time) {
   { // bass
     float t = time.y;
 
-    float shead = 0.0;
-    float ss = 0.0;
-    float st = t2sSwing(t);
-    float sl = 0.0;
-    float pitch = 0.0;
-
-    #define S(a,b,p) shead+=float(a); if(shead<=st) { ss=shead; sl=float(b); pitch=float(p); }
-    S(0,1,0) S(2,1.5,12)
-    S(2,1,0) S(1,1,12) S(1,1,15) S(1,1,17)
-    S(2,1,0) S(1,1.5,12)
-    S(2,2,0) S(2,1,12) S(1,1,7)
-    #undef S
-
-    float s = s2tSwing(ss);
-    float l = s2tSwing(ss + sl) - s;
-    t -= s;
-
-    float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, l - t);
-    
-    // int iProg = imod(int(time.z / (4.0 * B2T)), N_CHORD_PROGS);
-    // int iChord = iProg * N_CHORD_NOTES;
-    pitch += 24.0 + TRANSPOSE;
+    int iProg = imod(int(time.z / (4.0 * B2T)), N_CHORD_PROGS);
+    int iChord = iProg * N_CHORD_NOTES;
+    float pitch = 24.0 + TRANSPOSE + float(CHORDS[iChord]);
     float freq = p2f(pitch);
     float phase = freq * t;
 
-    float k = mix(0.7, 1.0, exp2(-2.0 * t));
-    vec2 wave = 0.5 * vec2(sin(TAU * phase));
-
-    repeat(i, 4) { // unison
-      vec3 dice = hash3f(vec3(i, 20, 50));
-      vec2 dicen = boxMuller(dice.xy);
-      wave += cheapfiltersaw(phase + hash3f(dice).xy, k) / 4.0;
-    }
-
-    dest += 0.7 * env * mix(0.0, 1.0, duck) * wave;
+    vec2 wave = vec2(sin(2.0 * sin(TAU * phase)));
+    dest += 0.5 * mix(0.0, 1.0, duck) * wave;
   }
 
   { // chord riff
@@ -431,18 +399,14 @@ vec2 mainAudio(vec4 time) {
 
         float tGateStart = 0.0;
         float tGateEnd = 0.0;
-
-        #define V(x) s2tSwing(x)
-        #define S(a,b) if(V(a)<tOsc){tGateStart=V(a);tGateEnd=V(b);}
-        S(11-16,12-16)
-        S(1,3.2)
-        S(4,5)
-        S(6,7)
-        S(8,10.2)
-        S(11,12)
-        #undef V
-        #undef S
-
+        #define S(x) s2tSwing(x)
+        #define SEQ(a,b) if(S(a)<tOsc){tGateStart=S(a);tGateEnd=S(b);}
+        SEQ(11-16,12-16)
+        SEQ(1,3.2)
+        SEQ(4,5)
+        SEQ(6,7)
+        SEQ(8,10.2)
+        SEQ(11,12)
         float tGate = tOsc - tGateStart;
         float lGate = tGateEnd - tGateStart;
         float envGate = smoothstep(0.0, 0.001, tGate) * mix(
