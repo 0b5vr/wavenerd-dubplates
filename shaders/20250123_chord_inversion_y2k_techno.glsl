@@ -254,11 +254,13 @@ vec2 mainAudioDry(vec4 time) {
 
     {
       float phase = (
-        42.0 * t
-        - 4.0 * exp2(-t * 30.0)
-        - 4.0 * exp2(-t * 70.0)
+        45.0 * t
+        - 3.0 * exp2(-t * 20.0)
+        - 6.0 * exp2(-t * 40.0)
+        - 3.0 * exp2(-t * 100.0)
+        - 1.0 * exp2(-t * 600.0)
       );
-      float wave = sin(TAU * phase + 0.3 * cos(TAU * phase));
+      float wave = sin(TAU * phase);
       dest += 0.6 * tanh(2.0 * env * wave);
     }
   }

@@ -228,9 +228,10 @@ vec2 mainAudio(vec4 time) {
 
       float phase = (
         52.0 * t
-        - 4.0 * exp2(-t * 20.0)
-        - 4.0 * exp2(-t * 80.0)
-        - 3.0 * exp2(-t * 400.0)
+        - 2.0 * exp2(-t * 20.0)
+        - 5.0 * exp2(-t * 40.0)
+        - 3.0 * exp2(-t * 100.0)
+        - 1.0 * exp2(-t * 600.0)
       );
 
       float wave = sin(1.7 * sin(TAU * phase));
@@ -392,7 +393,7 @@ vec2 mainAudio(vec4 time) {
     vec2 sum = vec2(0.0);
     repeat(iUnison, 64) {
       repeat(iDelay, 3) {
-        vec3 dice = hash3f(vec3(iUnison, iDelay, 50));
+        vec3 dice = hash3f(vec3(iUnison, iDelay, 80));
         float tOsc = tmod(time - 4.0 * float(iDelay) * S2T, timeLength.z);
         int iProg = imod(int(floor((tOsc - S2T) / (4.0 * B2T))), + N_CHORD_PROGS);
         tOsc = tmod(time - 4.0 * float(iDelay) * S2T, timeLength.y);

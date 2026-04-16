@@ -241,9 +241,10 @@ vec2 mainAudio(vec4 time) {
 
       float phase = (
         45.0 * t
-        - 3.0 * exp2(-t * 40.0)
-        - 5.0 * exp2(-t * 80.0)
-        - 3.0 * exp2(-t * 400.0)
+        - 2.0 * exp2(-t * 20.0)
+        - 5.0 * exp2(-t * 40.0)
+        - 3.0 * exp2(-t * 100.0)
+        - 2.0 * exp2(-t * 400.0)
       );
 
       float wave = sin(1.7 * sin(TAU * phase));
