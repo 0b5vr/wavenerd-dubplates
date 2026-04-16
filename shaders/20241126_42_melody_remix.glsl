@@ -274,8 +274,8 @@ vec2 mainAudio(vec4 time) {
       float freq = p2f(bpitch + TRANSPOSE);
       float phase = freq * lofi(t, 1.0 / 8000.0);
 
-      vec2 wave = vec2(2.0 * fract(phase) - 1.0);
-      dest += 0.1 * mix(1.0, 1.0, duck) * env * wave;
+      vec2 wave = 2.0 * fract(phase + vec2(0.0, 0.5)) - 1.0;
+      dest += 0.12 * mix(1.0, 1.0, duck) * env * wave;
     }
 
     { // bass
