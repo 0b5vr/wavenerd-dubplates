@@ -224,6 +224,7 @@ vec2 mainAudio(vec4 time) {
         - 9.0 * exp2(-t * 40.0)
         - 3.0 * exp2(-t * 200.0)
         - 3.0 * exp2(-t * 600.0)
+        - 0.5 * exp2(-t * 80.0) * cheapnoise(2.0 * t + 5.0).x
       );
 
       vec2 wave = tanh(2.0 * sin(TAU * phase));
@@ -400,7 +401,7 @@ vec2 mainAudio(vec4 time) {
       phase *= exp2(detuned * 0.1 * (dice.xy - 0.5));
       phase += dice.yz;
 
-      float k = exp2(-0.5 * t) * exp(-0.1 * iDelay);
+      float k = exp2(-0.5 * t) * exp2(-0.1 * iDelay);
       float delaydecay = exp2(-1.0 * iDelay);
       sum += mix(3.0, 1.0, detuned) * env * delaydecay * (
         cheapfiltersaw(phase, k)
