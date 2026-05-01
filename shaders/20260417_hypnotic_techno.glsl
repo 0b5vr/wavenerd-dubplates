@@ -89,6 +89,30 @@ vec4 seq16(float t, int seq) {
   );
 }
 
+vec4 quant(float t, float interval, out float i) {
+  interval = max(interval, 1.0);
+  float st = t2sSwing(t);
+
+  i = floor(floor(st) / interval);
+
+  float prevStep = ceil(i * interval);
+  float prevTime = s2tSwing(prevStep);
+  float nextStep = ceil((i + 1.0) * interval);
+  float nextTime = s2tSwing(nextStep);
+
+  return vec4(
+    prevStep,
+    t - prevTime,
+    nextStep,
+    nextTime - t
+  );
+}
+
+vec4 quant(float t, float interval) {
+  float _;
+  return quant(t, interval, _);
+}
+
 mat3 orthBas(vec3 z) {
   z = normalize(z);
   vec3 x = normalize(cross(vec3(0, 1, 0), z));
@@ -124,15 +148,6 @@ vec3 cyclic(vec3 p, float pers, float lacu) {
   }
 
   return sum.xyz / sum.w;
-}
-
-vec3 corruptor(float t, float corrupt) {
-  const float PERS = 0.5;
-  const float LACU = 1.4;
-
-  float n = cyclic(vec3(t, corrupt, 0.0), PERS, LACU).x;
-  n = floor(n + corrupt);
-  return hash3f(vec3(t, 0.0, n));
 }
 
 float cheapfiltersaw(float phase, float k) {
@@ -171,6 +186,32 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
   }
 
   return sum / 64.0;
+}
+
+vec2 ladderLPF(float freq, float cutoff, float reso) {
+  float omega = freq / cutoff;
+  float omegaSq = omega * omega;
+
+  float a = 4.0 * omega * (omegaSq - 1.0);
+  float b = 4.0 * reso + omegaSq * omegaSq - 6.0 * omegaSq + 1.0;
+
+  return vec2(
+    1.0 / sqrt(a * a + b * b),
+    atan(a, b)
+  );
+}
+
+vec2 twoPoleHPF(float freq, float cutoff, float reso) {
+  float omega = freq / cutoff;
+  float omegaSq = omega * omega;
+
+  float a = 2.0 * (1.0 - reso) * omega;
+  float b = omegaSq - 1.0;
+
+  return vec2(
+    omegaSq / sqrt(a * a + b * b),
+    atan(a, b)
+  );
 }
 
 vec2 mainAudio(vec4 time) {
@@ -336,6 +377,42 @@ vec2 mainAudio(vec4 time) {
     dest += 0.4 * env * mix(0.1, 1.0, duck) * tanh(8.0 * wave);
   }
 
+  { // sub riff
+    vec4 seq = seq16(time.y, 0xffff);
+    float st = seq.s;
+    float t = seq.t;
+    float q = seq.q;
+
+    float env = smoothstep(0.0, 0.01, t) * smoothstep(0.0, 0.01, q);
+    float stmod = fract(0.395 * st + 0.44);
+    float cutenv = smoothstep(0.0, 0.01, t) * exp2(-10.0 * t);
+    float cutoff = exp2(
+      4.0
+      + 5.0 * stmod
+      + 4.0 * cutenv
+    );
+
+    vec2 sum = vec2(0.0);
+    repeat(iPartial, 128) {
+      float partial = 1.0 + float(iPartial);
+      partial = pow(partial, 1.1);
+      partial = mix(partial, 1.0, 0.04);
+
+      const float basefreq = 110.0;
+      float freq = basefreq * partial;
+
+      vec2 lpf = ladderLPF(freq, cutoff, 0.3);
+      vec2 hpf = twoPoleHPF(freq, 600.0, 0.0);
+
+      vec2 phase = vec2(t * freq);
+      vec2 wave = sin(TAU * phase + lpf.y + hpf.y) / partial * lpf.x * hpf.x;
+
+      sum += env * wave * rotate2D(2.4 * float(iPartial));
+    }
+
+    dest += 0.16 * mix(0.2, 1.0, duck) * tanh(5.0 * sum);
+  }
+
   { // riff
     vec2 sum = vec2(0.0);
 
@@ -354,7 +431,7 @@ vec2 mainAudio(vec4 time) {
       vec3 dice1 = hash3f(vec3(mod(st, 8.0), 12, 2));
 
       float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
-      
+
       float p0 = mix(44.0, 90.0, dice0.y) + TRANSPOSE;
       float p1 = mix(44.0, 90.0, dice1.y) + TRANSPOSE;
       vec2 phase = vec2(glidephase(t, GLIDE, p0, p1));

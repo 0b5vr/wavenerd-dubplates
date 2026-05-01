@@ -241,10 +241,9 @@ vec2 mainAudio(vec4 time) {
 
       float phase = (
         45.0 * t
-        - 2.0 * exp2(-t * 20.0)
-        - 5.0 * exp2(-t * 40.0)
-        - 3.0 * exp2(-t * 100.0)
-        - 2.0 * exp2(-t * 400.0)
+        - 3.0 * exp2(-t * 40.0)
+        - 5.0 * exp2(-t * 80.0)
+        - 3.0 * exp2(-t * 400.0)
       );
 
       float wave = sin(1.7 * sin(TAU * phase));
@@ -439,10 +438,10 @@ vec2 mainAudio(vec4 time) {
       float pitchOff = 0.0;
 
       #define S(x) s2tSwing(x)
-      #define SEQ(a, b, p) if(t > S(a)) { s = S(a); l = S(b) - s; pitchOff = float(p); }
+      #define SEQ(a, b, p) if(t > S(a)) { s = S(a); l = S(a+b) - s; pitchOff = float(p); }
       SEQ(0, 32, 0)
-      SEQ(32, 48, 7)
-      SEQ(48, 64, 3)
+      SEQ(32, 16, 7)
+      SEQ(48, 16, 3)
 
       t = t - s;
 
