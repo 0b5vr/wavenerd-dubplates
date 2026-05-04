@@ -219,18 +219,6 @@ vec2 mainAudio(vec4 time) {
 
   float duck = 1.0;
 
-  const int N_CODE_NOTES = 8;
-  const int CODES[] = int[](
-    0, 5, 7, 10, 12, 14, 17, 19,
-    -4, 5, 7, 10, 12, 15, 17, 19,
-    -7, 3, 7, 10, 12, 14, 17, 19
-  );
-
-  // { CHORD PROG }
-  #define CHORD_PROG 0
-
-  #define CHORD_NOTE(i) (float(CODES[CHORD_PROG * N_CODE_NOTES + int(i) % N_CODE_NOTES]))
-
   { // kick
     vec4 seq = seq16(time.y, 0x8888);
     float t = seq.t;
