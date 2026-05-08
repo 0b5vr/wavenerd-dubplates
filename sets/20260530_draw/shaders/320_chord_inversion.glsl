@@ -420,7 +420,7 @@ vec2 mainAudioDry(vec4 time) {
       0.3
     );
 
-    dest += 0.24 * p2 * fade * mix(0.5, 1.0, duck) * tanh(8.0 * env * wave);
+    dest += 0.2 * p2 * fade * mix(0.5, 1.0, duck) * tanh(8.0 * env * wave);
   }
 
   { // bass
