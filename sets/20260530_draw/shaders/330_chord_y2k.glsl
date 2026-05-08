@@ -1,3 +1,11 @@
+// - early return the chord riff to solo
+// - substitute the chord riff to play chord + arp + fx
+// - DON'T FORGET TO ENABLE THE BASS CHORD PROGRESSION
+// - drop the kick and bass
+// - enable fill in
+// - unmute everything
+// - 😀👍
+
 #define S2T (15.0 / bpm)
 #define B2T (60.0 / bpm)
 #define ZERO min(0, int(bpm))
@@ -191,7 +199,7 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
   return sum / 64.0;
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
   float duck = 1.0;
@@ -365,6 +373,41 @@ vec2 mainAudio(vec4 time) {
     dest += 0.2 * env * mix(0.3, 1.0, duck) * vec2(wave) * rotate2D(seq.x);
   }
 
+  { // snare roll
+    float fade = smoothstep(32.0 * B2T, 64.0 * B2T, time.z);
+
+    vec4 seq = seq16(time.y, 0xffff);
+    float t = seq.t;
+    float q = seq.q;
+
+    if (time.z > 60.0 * B2T) {
+      float l = 0.125 * B2T;
+      t = mod(time.x, l);
+      q = l - t;
+    }
+
+    float env = smoothstep(0.0, 0.01, q);
+    env *= mix(
+      exp(-10.0 * max(t - 0.04, 0.0)),
+      exp(-80.0 * t),
+      0.3
+    );
+
+    float sinphase = 220.0 * t - 3.0 * exp2(-t * 200.0);
+    float noisephase = 100.0 * t;
+    vec2 wave = mix(
+      mix(
+        cis(TAU * (sinphase)),
+        cis(TAU * (1.5 * sinphase)),
+        0.3
+      ),
+      cheapnoise(noisephase) - cheapnoise(noisephase - 0.004),
+      0.3
+    );
+
+    dest += 0.2 * p2 * fade * mix(0.5, 1.0, duck) * tanh(8.0 * env * wave);
+  }
+
   { // crash
     float t = mod(time.z, 64.0 * B2T);
     if (isFillIn) {
@@ -487,5 +530,10 @@ vec2 mainAudio(vec4 time) {
     dest += 0.05 * mix(0.2, 1.0, duck) * sum;
   }
 
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
   return clip(1.3 * tanh(dest));
 }
