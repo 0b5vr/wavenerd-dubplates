@@ -10,7 +10,7 @@
 #define tri(x) (1.0 - 4.0 * abs(fract((x) + 0.25) - 0.5))
 #define repeat(i, n) for (int i = ZERO; i < n; i++)
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
-#define TRANSPOSE 4.0
+#define TRANSPOSE 3.0
 
 const float SWING = 0.5;
 
@@ -232,133 +232,94 @@ vec2 mainAudio(vec4 time) {
       smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q)
     );
 
-    // {
-    //   float env = smoothstep(0.0, 0.001, q);
-    //   env *= smoothstep(0.3, 0.1, t);
-    //   env *= mix(1.0, exp(-50.0 * t), p3);
+    {
+      float env = smoothstep(0.0, 0.001, q);
+      env *= smoothstep(0.3, 0.1, t);
+      env *= mix(1.0, exp(-50.0 * t), p3);
 
-    //   float phase = (
-    //     40.0 * t
-    //     - 2.0 * exp2(-t * 20.0)
-    //     - 1.0 * exp2(-t * 60.0)
-    //     - 1.0 * exp2(-t * 100.0)
-    //   );
-    //   phase += 0.1 * exp2(-40.0 * t) * sin(5.0 * TAU * phase); // fm attack
+      float phase = (
+        40.0 * t
+        - 2.0 * exp2(-t * 20.0)
+        - 1.0 * exp2(-t * 60.0)
+        - 1.0 * exp2(-t * 100.0)
+      );
+      phase += 0.1 * exp2(-40.0 * t) * sin(5.0 * TAU * phase); // fm attack
 
-    //   float wave = tanh(sin(TAU * phase));
+      float wave = tanh(sin(TAU * phase));
 
-    //   dest += 0.8 * env * wave;
-    // }
+      dest += 0.8 * env * wave;
+    }
   }
 
-  // { // bass
-  //   const int N_NOTES = 5;
-  //   const int NOTES[N_NOTES] = int[](0, 12, 0, 24, 13);
+  { // bass
+    float l = B2T;
+    float t = time.x;
+    float q = l - t;
 
-  //   float s = 0.0;
-  //   float l = 10.0 * S2T;
-  //   float t = tmod(time, l);
-  //   float pitchOff = 0.0;
+    float env = smoothstep(0.0, 0.01, t) * smoothstep(0.0, 0.01, q);
 
-  //   #define S(x) s2tSwing(x)
-  //   #define SEQ(a, b, p) if(t > S(a)) { s = S(a); l = S(a+b) - s; pitchOff = float(p); }
-  //   SEQ(0, 2, 0)
-  //   SEQ(2, 1, 10)
-  //   SEQ(3, 1, 0)
-  //   SEQ(4, 1, 12)
-  //   SEQ(5, 2, 0)
-  //   SEQ(7, 1, 12)
-  //   SEQ(8, 1, 0)
-  //   SEQ(9, 1, 10)
-  //   #undef S
-  //   #undef SEQ
+    float progtrans = mod(time.z / S2T, 128.0) < 64.0 ? 0.0 : -3.0;
+    float pitch = 24.0 + TRANSPOSE + progtrans;
+    float freq = p2f(pitch);
+    float phase = freq * t;
 
-  //   t = t - s;
-  //   float q = l - t;
+    vec2 osc = vec2(0.0);
+    osc += sin(TAU * phase);
 
-  //   vec2 sum = vec2(0.0);
+    dest += 0.5 * mix(0.0, 1.0, duck) * env * osc;
+  }
 
-  //   float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q - 0.1 * S2T);
+  { // hihat
+    vec4 seq = seq16(time.y, 0xffff);
+    float t = seq.t;
+    float q = seq.q;
 
-  //   float cutoff = exp2(
-  //     8.0
-  //     + 1.0 * sin(time.w)
-  //     + mix(1.0, 5.0, fract(s * 0.612)) * exp2(-8.0 * t)
-  //   );
-  //   float reso = 0.2;
+    float env = smoothstep(0.0, 0.01, q);
+    env *= exp2(-100.0 * t);
 
-  //   repeat(i, 128) {
-  //     float fi = float(i);
-  //     vec3 dice = hash3f(vec3(i, 40, 10));
+    vec2 wave = shotgun(3700.0 * t, 2.0, 0.0, 0.0);
+    wave = tanh(2.0 * wave);
 
-  //     float progtrans = mod(time.z / S2T, 128.0) < 64.0 ? 0.0 : -3.0;
-  //     float pitch = 24.0 + TRANSPOSE + pitchOff + progtrans;
+    dest += 0.3 * mix(0.1, 1.0, duck) * env * wave;
+  }
 
-  //     float p = 1.0 + 1.0 * fi;
-  //     float freq = p2f(pitch) * p;
+  { // open hihat
+    vec4 seq = seq16(time.y, 0x2222);
+    float t = seq.t;
+    float q = seq.q;
 
-  //     vec2 filt = ladderLPF(freq, cutoff, reso);
-  //     float phase = t * freq;
+    float env = smoothstep(0.0, 0.01, q);
+    env *= exp2(-60.0 * max(t - 0.05, 0.0));
 
-  //     vec2 wave = vec2(0.0);
-  //     wave += sin(TAU * phase + filt.y);
-  //     sum += wave * env * filt.x / p * rotate2D(0.6 * fi * (dice.x - 0.5));
-  //   }
+    vec2 wave = shotgun(2400.0 * t, 2.2, 0.0, 2.0);
+    wave = tanh(2.0 * wave);
 
-  //   dest += 0.3 * tanh(2.0 * sum);
-  // }
+    dest += 0.6 * mix(0.1, 1.0, duck) * env * wave;
+  }
 
-  // { // hihat
-  //   vec4 seq = seq16(time.y, 0xffff);
-  //   float t = seq.t;
-  //   float q = seq.q;
+  { // rim
+    float t = min(
+      quant(time.z, 3.21).t,
+      quant(time.z, 2.44).t
+    );
 
-  //   float env = smoothstep(0.0, 0.01, q);
-  //   env *= exp2(-100.0 * t);
+    float env = exp2(-400.0 * t);
 
-  //   vec2 wave = shotgun(3700.0 * t, 2.0, 0.0, 0.0);
-  //   wave = tanh(2.0 * wave);
+    float wave = tanh(4.0 * (
+      + tri(t * 400.0 - 0.5 * env)
+      + tri(t * 1500.0 - 0.5 * env)
+    ));
 
-  //   dest += 0.3 * mix(0.1, 1.0, duck) * env * wave;
-  // }
+    dest += 0.2 * env * mix(0.3, 1.0, duck) * vec2(wave) * rotate2D(time.z - t);
+  }
 
-  // { // open hihat
-  //   vec4 seq = seq16(time.y, 0x2222);
-  //   float t = seq.t;
-  //   float q = seq.q;
+  { // crash
+    float t = mod(time.z, 64.0 * B2T);
 
-  //   float env = smoothstep(0.0, 0.01, q);
-  //   env *= exp2(-60.0 * max(t - 0.05, 0.0));
-
-  //   vec2 wave = shotgun(2400.0 * t, 2.2, 0.0, 2.0);
-  //   wave = tanh(2.0 * wave);
-
-  //   dest += 0.6 * mix(0.1, 1.0, duck) * env * wave;
-  // }
-
-  // { // rim
-  //   float t = min(
-  //     quant(time.z, 3.21).t,
-  //     quant(time.z, 2.44).t
-  //   );
-
-  //   float env = exp2(-400.0 * t);
-
-  //   float wave = tanh(4.0 * (
-  //     + tri(t * 400.0 - 0.5 * env)
-  //     + tri(t * 1500.0 - 0.5 * env)
-  //   ));
-
-  //   dest += 0.2 * env * mix(0.3, 1.0, duck) * vec2(wave) * rotate2D(time.z - t);
-  // }
-
-  // { // crash
-  //   float t = mod(time.z, 64.0 * B2T);
-
-  //   float env = mix(exp(-t), exp(-10.0 * t), 0.7);
-  //   vec2 wave = shotgun(4500.0 * t, 1.4, 0.0, 1.0);
-  //   dest += 0.4 * env * mix(0.1, 1.0, duck) * tanh(8.0 * wave);
-  // }
+    float env = mix(exp(-t), exp(-10.0 * t), 0.7);
+    vec2 wave = shotgun(4500.0 * t, 1.4, 0.0, 1.0);
+    dest += 0.4 * env * mix(0.1, 1.0, duck) * tanh(8.0 * wave);
+  }
 
   const int N_CHORD = 8;
   int CHORD[] = int[](
