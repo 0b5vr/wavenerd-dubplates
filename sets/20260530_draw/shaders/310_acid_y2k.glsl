@@ -586,15 +586,13 @@ vec2 mainAudio(vec4 time) {
   //     float phase = t * freq + dice.y;
   //     phase = lofi(phase, 1.0 / 32.0);
 
-  //     vec3 p = vec3(7.0, 3.0, 5.0);
-  //     p += exp2(-1.0 * t) * vec3(3.0, -5.0, 4.0) * tri(phase);
+  //     float width = 0.8 + 1.5 * exp2(-1.0 * t);
+  //     vec2 wave = vec2(cheapfiltersaw(width * tri(phase), 0.8));
 
-  //     vec2 wave = cyclic(p, 0.5, 2.0, 0.2).xy;
-
-  //     sum += fade * wave * rotate2D(2.4 * float(iUnison));
+  //     sum += fade * tanh(wave) * rotate2D(2.4 * float(iUnison));
   //   }
 
-  //   dest += 0.05 * sum * mix(0.2, 1.0, duck);
+  //   dest += 0.07 * sum * mix(0.2, 1.0, duck);
   // }
 
   return clip(1.2 * tanh(dest));
