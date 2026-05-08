@@ -248,10 +248,6 @@ vec2 mainAudio(vec4 time) {
       env *= smoothstep(0.3, 0.1, t);
       env *= mix(1.0, exp2(-50.0 * t), p3);
 
-      // { // highpass-like
-      //   env *= exp(-50.0 * t);
-      // }
-
       vec2 phase = vec2(
         44.0 * t
         - 1.0 * exp2(-t * 20.0)
