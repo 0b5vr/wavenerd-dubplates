@@ -24,9 +24,11 @@ const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob2; // snare roll
 uniform vec4 param_knob3; // kick cut
+uniform vec4 param_knob4; // inversion width
 
 #define p2 paramFetch(param_knob2)
 #define p3 paramFetch(param_knob3)
+#define p4 paramFetch(param_knob4)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -481,8 +483,13 @@ vec2 mainAudioDry(vec4 time) {
   { // lead
     vec2 sum = vec2(0.0);
 
-    const float INV_WIDTH = 1.0; // -> 11.0
-    const int PATTERN = 0x8000; // -> 0xffff
+    float invWidth = 1.0;
+    int pattern = 0x8000;
+
+    // { // inversion
+    //   invWidth = mix(5.0, 15.0, p4);
+    //   pattern = 0xffff;
+    // }
 
     repeat(iDelay, 4) {
       float fiDelay = float(iDelay);
@@ -490,7 +497,7 @@ vec2 mainAudioDry(vec4 time) {
 
       vec2 sumd = vec2(0.0);
 
-      vec4 seq = seq16(time.y + offset, PATTERN);
+      vec4 seq = seq16(time.y + offset, pattern);
       float t = seq.t;
       float q = seq.q;
       float st1 = seq.s + mod(16.0 * floor((time.z + offset) / (4.0 * B2T)), 64.0);
@@ -500,8 +507,8 @@ vec2 mainAudioDry(vec4 time) {
 
       int prog0 = int(mod(floor(st0 / 16.0), 4.0));
       int prog1 = int(mod(floor(st1 / 16.0), 4.0));
-      int inv0 = int(INV_WIDTH * fract(0.5 + 0.408 * st0));
-      int inv1 = int(INV_WIDTH * fract(0.5 + 0.408 * st1));
+      int inv0 = int(invWidth * fract(0.5 + 0.408 * st0));
+      int inv1 = int(invWidth * fract(0.5 + 0.408 * st1));
 
       const int N_UNISON = 3;
 
