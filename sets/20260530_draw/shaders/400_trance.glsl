@@ -221,6 +221,17 @@ vec2 mainAudio(vec4 time) {
   //     q = 4.0 * B2T - t;
   //   }
 
+  //   // { // roll
+  //   //   float l = (
+  //   //     time.z > 60.0 * B2T ? 0.5 * S2T :
+  //   //     time.z > 48.0 * B2T ? S2T :
+  //   //     time.z > 32.0 * B2T ? 2.0 * S2T :
+  //   //     4.0 * S2T
+  //   //   );
+  //   //   t = mod(time.x, l);
+  //   //   q = l - t;
+  //   // }
+
   //   duck = min(
   //     duck,
   //     smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q)
@@ -323,7 +334,7 @@ vec2 mainAudio(vec4 time) {
   //   phase += phase + 0.1 * sin(TAU * phase);
   //   vec2 wave = shotgun(phase, 2.0, 0.4, exp2(mix(1.0, 3.0, vel)));
 
-  //   dest += 0.2 * mix(0.3, 1.0, duck) * tanh(8.0 * env * wave);
+  //   dest += 0.16 * mix(0.3, 1.0, duck) * tanh(8.0 * env * wave);
   // }
 
   // { // ride
@@ -404,13 +415,13 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.25 * mix(0.0, 1.0, duck) * tanh(20.0 * env * wave);
   // }
 
-  { // crash
-    float t = mod(time.z, 64.0 * B2T);
+  // { // crash
+  //   float t = mod(time.z, 64.0 * B2T);
 
-    float env = mix(exp(-t), exp(-10.0 * t), 0.7);
-    vec2 wave = shotgun(4100.0 * t, 1.9, 0.0, 1.0);
-    dest += 0.5 * env * mix(0.2, 1.0, duck) * tanh(8.0 * wave);
-  }
+  //   float env = mix(exp(-t), exp(-10.0 * t), 0.7);
+  //   vec2 wave = shotgun(4100.0 * t, 1.9, 0.0, 1.0);
+  //   dest += 0.5 * env * mix(0.2, 1.0, duck) * tanh(8.0 * wave);
+  // }
 
   { // snare roll
     float fade = smoothstep(32.0 * B2T, 64.0 * B2T, time.z);
@@ -444,7 +455,7 @@ vec2 mainAudio(vec4 time) {
       0.3
     );
 
-    dest += 0.3 * p2 * fade * mix(0.3, 1.0, duck) * tanh(4.0 * env * wave);
+    dest += 0.3 * p2 * fade * mix(0.5, 1.0, duck) * tanh(4.0 * env * wave);
   }
 
   { // arp
@@ -492,7 +503,7 @@ vec2 mainAudio(vec4 time) {
       );
     }
 
-    dest += 0.05 * mix(0.3, 1.0, duck) * sum;
+    dest += 0.05 * mix(0.4, 1.0, duck) * sum;
   }
 
   { // chord
@@ -534,7 +545,7 @@ vec2 mainAudio(vec4 time) {
       sum += fade * wave * rotate2D(2.4 * float(iUnison));
     }
 
-    dest += 0.03 * sum * mix(0.4, 1.0, duck);
+    dest += 0.03 * sum * mix(0.5, 1.0, duck);
   }
 
   return clip(1.2 * tanh(0.9 * dest));
