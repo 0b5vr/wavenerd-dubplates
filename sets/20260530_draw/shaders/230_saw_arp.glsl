@@ -231,9 +231,7 @@ vec2 mainAudio(vec4 time) {
 
   float duck = 1.0;
 
-  #define GET_IPROG(t) step(16.0 * B2T, mod(t, 32.0 * B2T))
-
-  { // kicks
+  { // kick
     vec4 seq = seq16(time.y, 0x8888);
     float t = seq.t;
     float q = seq.q;
@@ -243,22 +241,20 @@ vec2 mainAudio(vec4 time) {
       smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q)
     );
 
-    {
-      float env = smoothstep(0.0, 0.001, q);
-      env *= smoothstep(0.3, 0.1, t);
-      env *= mix(1.0, exp2(-50.0 * t), p3);
+    float env = smoothstep(0.0, 0.001, q);
+    env *= smoothstep(0.3, 0.1, t);
+    env *= mix(1.0, exp2(-50.0 * t), p3);
 
-      vec2 phase = vec2(
-        44.0 * t
-        - 1.0 * exp2(-t * 20.0)
-        - 1.0 * exp2(-t * 80.0)
-        - 2.0 * exp2(-t * 200.0)
-      );
+    vec2 phase = vec2(
+      44.0 * t
+      - 1.0 * exp2(-t * 20.0)
+      - 1.0 * exp2(-t * 80.0)
+      - 2.0 * exp2(-t * 200.0)
+    );
 
-      vec2 wave = tanh(2.0 * sin(TAU * phase));
+    vec2 wave = tanh(2.0 * sin(TAU * phase));
 
-      dest += 0.7 * env * wave;
-    }
+    dest += 0.7 * env * wave;
   }
 
   { // bass
@@ -266,6 +262,7 @@ vec2 mainAudio(vec4 time) {
     float t = seq.t;
     float q = seq.q;
 
+    float bassduck = smoothstep(0.0, B2T, time.x);
     float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
     env *= exp2(-20.0 * t);
 
@@ -276,7 +273,7 @@ vec2 mainAudio(vec4 time) {
     vec2 osc = vec2(0.0);
     osc += sin(TAU * phase);
 
-    dest += 0.5 * mix(0.0, 1.0, duck) * env * osc;
+    dest += 0.5 * mix(0.7, 1.0, duck) * bassduck * env * osc;
   }
 
   // { // hihat
@@ -284,8 +281,10 @@ vec2 mainAudio(vec4 time) {
   //   float t = seq.t;
   //   float q = seq.q;
 
+  //   float accent = seq16(time.y, 0x0000).s == seq.s ? 1.0 : 0.0;
+
   //   float env = smoothstep(0.0, 0.01, q);
-  //   env *= exp2(-30.0 * t);
+  //   env *= exp2(-mix(30.0, 5.0, accent) * t);
 
   //   vec2 wave = shotgun(4000.0 * t, 2.0, 0.0, 0.0);
   //   wave = tanh(1.5 * wave);
@@ -356,7 +355,7 @@ vec2 mainAudio(vec4 time) {
 
     //     sum += osc / 64.0;
     //   }
-    //   dest += 0.3 * mix(0.7, 1.0, duck) * sum;
+    //   dest += 0.4 * mix(0.7, 1.0, duck) * sum;
     // }
   }
 
