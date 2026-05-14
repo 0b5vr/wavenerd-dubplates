@@ -203,7 +203,7 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
   return sum / 64.0;
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
   float duck = smoothstep(0.0, 0.4, time.x) * smoothstep(0.0, 0.001, B2T - time.x);
@@ -211,15 +211,6 @@ vec2 mainAudio(vec4 time) {
   // { // enable fill-in
   //   isFillIn = time.z > 60.0 * B2T;
   // }
-
-  const int N_CHORD_NOTES = 8;
-  const int N_CHORD_PROGS = 4;
-  const int CHORDS[] = int[](
-    0, 7, 10, 12, 14, 17, 19, 22,
-    -3, 4, 7, 12, 14, 16, 19, 23,
-    -4, 3, 7, 10, 12, 15, 19, 24,
-    1, 8, 10, 12, 15, 17, 19, 24
-  );
 
   // { // kick
   //   vec4 seq = seq16(time.y, 0x8888);
@@ -349,6 +340,40 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.14 * mix(0.1, 1.0, duck) * env * vec2(wave);
   // }
 
+  // { // sync
+  //   vec2 sum = vec2(0.0);
+  //   repeat(i, 4) {
+  //     vec4 tdelay = mod(time - float(i) * 2.0 * S2T, timeLength);
+  //     vec4 seq = seq16(tdelay.z, 0xedb6);
+  //     float t = seq.t;
+  //     float q = seq.q - 0.1 * S2T;
+  //     float st = seq.s + 16.0 * floor(tdelay.z / (16.0 * S2T));
+
+  //     vec3 dice = hash3f(vec3(st, 30, 40));
+
+  //     float delaydecay = exp2(-1.0 * float(i));
+
+  //     float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
+  //     env *= exp2(-10.0 * t);
+
+  //     float pitch = 36.0 + TRANSPOSE;
+  //     float freq = p2f(pitch);
+  //     float syncmul = exp2(
+  //       2.5
+  //       - cos(TAU * st / 128.0)
+  //       + dice.x
+  //       + 0.5 * exp2(-5.0 * t)
+  //     );
+
+  //     vec2 phase = syncmul * fract(t * freq + vec2(0.0, 0.2));
+  //     vec2 osc = vec2(2.0 * fract(phase) - 1.0);
+  //     osc *= rotate2D(TAU * dice.z);
+
+  //     sum += delaydecay * env * osc;
+  //   }
+  //   dest += 0.1 * mix(0.2, 1.0, duck) * sum;
+  // }
+
   // { // crash
   //   float t = mod(time.z, 64.0 * B2T);
   //   if (isFillIn) {
@@ -461,5 +486,10 @@ vec2 mainAudio(vec4 time) {
     dest += 1.0 * mix(0.2, 1.0, duck) * sum / 64.0;
   }
 
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
   return clip(1.3 * tanh(dest));
 }
