@@ -19,8 +19,12 @@ const float TAU = PI * 2.0;
 const float LN2 = log(2.0);
 
 uniform vec4 param_knob3; // kick cut
+uniform vec4 param_knob4; // chord cutoff
+uniform vec4 param_knob5; // chord reso
 
 #define p3 paramFetch(param_knob3)
+#define p4 paramFetch(param_knob4)
+#define p5 paramFetch(param_knob5)
 
 uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
@@ -448,10 +452,10 @@ vec2 mainAudio(vec4 time) {
 
     vec2 sum = vec2(0.0);
 
-    repeat(i, 4) {
-      float fi = float(i);
+    repeat(iDelay, 4) {
+      float fiDelay = float(iDelay);
 
-      vec4 tdelay = mod(time - 3.0 * S2T * fi, timeLength);
+      vec4 tdelay = mod(time - 3.0 * S2T * fiDelay, timeLength);
       vec4 seq = seq16(tdelay.y, 0xffff);
       float st = seq.s + 16.0 * floor(tdelay.z / 16.0 / S2T);
       float t = seq.t;
@@ -460,7 +464,8 @@ vec2 mainAudio(vec4 time) {
       float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
       env *= exp(-10.0 * t);
 
-      float cutoff = exp2(9.0 + 3.0 * env - 0.5 * fi);
+      float cutoff = exp2(8.0 + 4.0 * p4 + 3.0 * env);
+      float reso = 0.9 * p5;
 
       vec2 wave = vec2(0.0);
       repeat(j, N_CHORD) {
@@ -474,15 +479,15 @@ vec2 mainAudio(vec4 time) {
           float p = 1.0 + fk;
           float freqp = freq * p;
 
-          vec2 lpf = ladderLPF(freqp, cutoff, 0.1);
+          vec2 lpf = ladderLPF(freqp, cutoff, reso);
           vec2 hpf = twoPoleHPF(freqp, 100.0, 0.0);
           float phase = TAU * freqp * t + lpf.y + hpf.y;
 
-          wave += vec2(sin(phase)) / p * lpf.x * hpf.x * rotate2D(2.4 * fk + fi);
+          wave += vec2(sin(phase)) / p * lpf.x * hpf.x * rotate2D(2.4 * fk + fiDelay);
         }
       }
 
-      float delaydecay = exp(-1.0 * fi);
+      float delaydecay = exp(-1.0 * fiDelay);
       sum += env * delaydecay * tanh(0.5 * wave);
     }
 
