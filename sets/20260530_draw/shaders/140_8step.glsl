@@ -246,30 +246,6 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.3 * env * mix(0.2, 1.0, sidechain) * tanh(8.0 * wave);
   // }
 
-  // { // ride
-  //   vec4 seq = seq16(time.y, 0xaaaa);
-  //   float t = seq.y;
-  //   float q = seq.w;
-
-  //   float env = exp2(-4.0 * t) * smoothstep(0.0, 0.01, q);
-
-  //   vec2 sum = vec2(0.0);
-
-  //   repeat(i, 8) {
-  //     vec3 dice = hash3f(vec3(i));
-  //     vec3 dice2 = hash3f(dice);
-
-  //     vec2 wave = vec2(0.0);
-  //     wave = 2.9 * env * sin(wave + exp2(14.27 + 0.2 * dice.x) * t + dice2.xy);
-  //     wave = 2.2 * env * sin(wave + exp2(13.87 + 0.1 * dice.y) * t + dice2.yz);
-  //     wave = 1.0 * env * sin(wave + exp2(13.39 + 0.9 * dice.z) * t + dice2.zx);
-
-  //     sum += wave;
-  //   }
-
-  //   dest += 0.04 * env * mix(0.3, 1.0, sidechain) * tanh(sum);
-  // }
-
   // { // perc
   //   vec4 seq = seq16(time.y, 0x2020);
   //   float t = seq.t;
@@ -296,6 +272,30 @@ vec2 mainAudio(vec4 time) {
   //   }
 
   //   dest += 0.2 * sidechain * sum;
+  // }
+
+  // { // ride
+  //   vec4 seq = seq16(time.y, 0xaaaa);
+  //   float t = seq.y;
+  //   float q = seq.w;
+
+  //   float env = exp2(-4.0 * t) * smoothstep(0.0, 0.01, q);
+
+  //   vec2 sum = vec2(0.0);
+
+  //   repeat(i, 8) {
+  //     vec3 dice = hash3f(vec3(i));
+  //     vec3 dice2 = hash3f(dice);
+
+  //     vec2 wave = vec2(0.0);
+  //     wave = 2.9 * env * sin(wave + exp2(14.27 + 0.2 * dice.x) * t + dice2.xy);
+  //     wave = 2.2 * env * sin(wave + exp2(13.87 + 0.1 * dice.y) * t + dice2.yz);
+  //     wave = 1.0 * env * sin(wave + exp2(13.39 + 0.9 * dice.z) * t + dice2.zx);
+
+  //     sum += wave;
+  //   }
+
+  //   dest += 0.04 * env * mix(0.3, 1.0, sidechain) * tanh(sum);
   // }
 
   { // crash

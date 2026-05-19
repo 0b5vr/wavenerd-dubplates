@@ -274,6 +274,20 @@ vec2 mainAudio(vec4 time) {
     dest += 0.4 * mix(0.0, 1.0, duck) * env * wave;
   }
 
+  { // rim
+    vec4 seq = seq16(time.y, 0x5151);
+    float t = seq.y;
+
+    float env = exp2(-400.0 * t);
+
+    float wave = tanh(4.0 * (
+      + tri(t * 400.0 - 0.5 * env)
+      + tri(t * 1500.0 - 0.5 * env)
+    ));
+
+    dest += 0.2 * env * vec2(wave) * rotate2D(seq.x);
+  }
+
   // { // hihat
   //   vec4 seq = seq16(time.y, 0xffff);
   //   float t = seq.t;
@@ -282,6 +296,22 @@ vec2 mainAudio(vec4 time) {
   //   float env = exp2(-80.0 * t) * smoothstep(0.0, 0.01, q);
   //   vec2 wave = shotgun(3700.0 * t, 2.4, 0.0, 1.0);
   //   dest += 0.2 * duck * env * tanh(8.0 * wave);
+  // }
+
+  // { // clap
+  //   vec4 seq = seq16(time.y, 0x0001);
+  //   float t = seq.y;
+  //   float q = seq.w;
+
+  //   float env = mix(
+  //     exp2(-60.0 * t),
+  //     exp2(-500.0 * mod(t, 0.012)),
+  //     exp2(-100.0 * max(0.0, t - 0.02))
+  //   );
+
+  //   vec2 wave = cyclic(vec3(4.0 * cis(1400.0 * t), 1840.0 * t), 0.5, 2.0).xy;
+
+  //   dest += 0.12 * tanh(20.0 * env * wave);
   // }
 
   // { // open hihat
@@ -318,36 +348,6 @@ vec2 mainAudio(vec4 time) {
 
   //   vec2 wave = shotgun(5000.0 * t, 1.1, 0.0, 1.0);
   //   dest += 0.08 * mix(0.1, 1.0, duck) * env * tanh(8.0 * wave);
-  // }
-
-  // { // clap
-  //   vec4 seq = seq16(time.y, 0x0001);
-  //   float t = seq.y;
-  //   float q = seq.w;
-
-  //   float env = mix(
-  //     exp2(-60.0 * t),
-  //     exp2(-500.0 * mod(t, 0.012)),
-  //     exp2(-100.0 * max(0.0, t - 0.02))
-  //   );
-
-  //   vec2 wave = cyclic(vec3(4.0 * cis(1400.0 * t), 1840.0 * t), 0.5, 2.0).xy;
-
-  //   dest += 0.12 * tanh(20.0 * env * wave);
-  // }
-
-  // { // rim
-  //   vec4 seq = seq16(time.y, 0x5151);
-  //   float t = seq.y;
-
-  //   float env = exp2(-400.0 * t);
-
-  //   float wave = tanh(4.0 * (
-  //     + tri(t * 400.0 - 0.5 * env)
-  //     + tri(t * 1500.0 - 0.5 * env)
-  //   ));
-
-  //   dest += 0.2 * env * vec2(wave) * rotate2D(seq.x);
   // }
 
   // { // clav

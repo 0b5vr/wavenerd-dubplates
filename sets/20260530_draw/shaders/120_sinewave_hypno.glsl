@@ -218,10 +218,6 @@ vec2 mainAudio(vec4 time) {
       float env = smoothstep(0.0, 0.001, q);
       env *= smoothstep(0.3, 0.2, t);
 
-      // { // highpass-like
-      //   env *= exp(-50.0 * t);
-      // }
-
       float phase = (
         48.0 * t
         - 2.0 * exp2(-t * 60.0)

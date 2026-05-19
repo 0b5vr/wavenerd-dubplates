@@ -306,10 +306,11 @@ vec2 mainAudio(vec4 time) {
     float env = exp(-300.0 * t);
 
     float gate = step(fract(st * 0.721 + 0.2), 0.6);
-    vec2 osc = gate * tanh(4.0 * (
-      +tri(t * 400.0 - 0.5 * env + vec2(0.0, 0.2))
-      +tri(t * 1500.0 - 0.5 * env + vec2(0.2, 0.0))
-    ));
+    vec2 osc = gate * vec2(tanh(4.0 * (
+      +tri(t * 400.0 - 0.5 * env)
+      +tri(t * 1500.0 - 0.5 * env)
+    )));
+    osc *= rotate2D(st);
     dest += 0.14 * mix(0.5, 1.0, duck) * env * osc;
   }
 
@@ -420,7 +421,7 @@ vec2 mainAudio(vec4 time) {
       sum += osc / 8.0;
     }
 
-    dest += 0.07 * env * mix(0.5, 1.0, duck) * sum;
+    dest += 0.06 * env * mix(0.5, 1.0, duck) * sum;
   }
 
   return clip(1.3 * tanh(dest));

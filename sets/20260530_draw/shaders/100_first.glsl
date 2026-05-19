@@ -37,13 +37,13 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float LN2 = log(2.0);
 
+uniform vec4 param_knob0; // riff amp
 uniform vec4 param_knob3; // kick cut
-uniform vec4 param_knob4; // riff amp
 uniform vec4 param_knob5; // riff fm ratio
 uniform vec4 param_knob7; // oidos filter
 
+#define p0 paramFetch(param_knob0)
 #define p3 paramFetch(param_knob3)
-#define p4 paramFetch(param_knob4)
 #define p5 paramFetch(param_knob5)
 #define p7 paramFetch(param_knob7)
 
@@ -147,18 +147,18 @@ mat3 orthBas(vec3 z) {
   return mat3(x, y, z);
 }
 
-float glidephase(float t, float t1, float p0, float p1) {
-  if (p0 == p1) {
-    return t * p2f(p1);
+float glidephase(float t, float t1, float pitch0, float pitch1) {
+  if (pitch0 == pitch1) {
+    return t * p2f(pitch1);
   }
 
-  float m0 = (p0 - 69.0) / 12.0;
-  float m1 = (p1 - 69.0) / 12.0;
+  float m0 = (pitch0 - 69.0) / 12.0;
+  float m1 = (pitch1 - 69.0) / 12.0;
   float b = (m1 - m0) / t1;
 
   return (
-    + p2f(p0) * (pow(2.0, b * min(t, t1)) - 1.0) / b / LN2
-    + max(0.0, t - t1) * p2f(p1)
+    + p2f(pitch0) * (pow(2.0, b * min(t, t1)) - 1.0) / b / LN2
+    + max(0.0, t - t1) * p2f(pitch1)
   );
 }
 
@@ -316,6 +316,16 @@ vec2 mainAudio(vec4 time) {
 
   //   dest += 0.3 * mix(0.1, 1.0, duck) * env * wave;
   // }
+  
+  // { // shaker
+  //   float t = mod(time.x, S2T);
+  //   float st = mod(floor(time.y / S2T), 8.0);
+
+  //   float vel = fract(st * 0.42 + 0.43);
+  //   float env = smoothstep(0.0, 0.02, t) * exp(-exp2(7.0 - 4.0 * vel) * t);
+  //   vec2 wave = cyclic(vec3(cis(3800.0 * t), exp2(8.0 + 4.0 * vel) * t), 0.8, 2.0).xy;
+  //   dest += 0.2 * env * duck * tanh(2.0 * wave);
+  // }
 
   // { // open hihat
   //   vec4 seq = seq16(time.y, 0x2222);
@@ -326,9 +336,9 @@ vec2 mainAudio(vec4 time) {
   //   env *= exp2(-40.0 * t);
 
   //   vec2 wave = shotgun(3100.0 * t, 1.2, 0.1, 2.0);
-  //   wave = tanh(1.5 * wave);
+  //   wave = tanh(3.0 * env * wave);
 
-  //   dest += 0.6 * mix(0.1, 1.0, duck) * env * wave;
+  //   dest += 0.6 * mix(0.1, 1.0, duck) * wave;
   // }
 
   // { // ride
@@ -353,16 +363,6 @@ vec2 mainAudio(vec4 time) {
   //   }
 
   //   dest += 0.07 * env * duck * tanh(sum);
-  // }
-
-  // { // shaker
-  //   float t = mod(time.x, S2T);
-  //   float st = mod(floor(time.y / S2T), 8.0);
-
-  //   float vel = fract(st * 0.42 + 0.43);
-  //   float env = smoothstep(0.0, 0.02, t) * exp(-exp2(7.0 - 4.0 * vel) * t);
-  //   vec2 wave = cyclic(vec3(cis(3800.0 * t), exp2(8.0 + 4.0 * vel) * t), 0.8, 2.0).xy;
-  //   dest += 0.2 * env * duck * tanh(2.0 * wave);
   // }
 
   // { // clap
@@ -444,9 +444,9 @@ vec2 mainAudio(vec4 time) {
 
       float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
 
-      float p0 = mix(44.0, 90.0, dice0.y) + TRANSPOSE;
-      float p1 = mix(44.0, 90.0, dice1.y) + TRANSPOSE;
-      vec2 phase = vec2(glidephase(t, GLIDE, p0, p1));
+      float pitch0 = mix(44.0, 90.0, dice0.y) + TRANSPOSE;
+      float pitch1 = mix(44.0, 90.0, dice1.y) + TRANSPOSE;
+      vec2 phase = vec2(glidephase(t, GLIDE, pitch0, pitch1));
 
       // stereo
       phase += mix(dice0.xy, dice1.xy, saturate(t / GLIDE));
@@ -473,7 +473,7 @@ vec2 mainAudio(vec4 time) {
       sum += env * delaydecay * wave / 4.0;
     }
 
-    dest += p4 * p4 * 0.4 * mix(0.3, 1.0, duck) * tanh(sum);
+    dest += p0 * p0 * 0.4 * mix(0.3, 1.0, duck) * tanh(sum);
   }
 
   { // oidos drone

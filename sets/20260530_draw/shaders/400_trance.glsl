@@ -299,6 +299,20 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.4 * mix(0.1, 1.0, duck) * env * wave;
   // }
 
+  // { // shaker
+  //   float t = mod(time.x, S2T);
+  //   float st = mod(floor(time.y / S2T), 8.0);
+
+  //   float vel = fract(st * 0.59 + 0.23);
+  //   float env = smoothstep(0.0, 0.02, t) * exp(-exp2(5.0 - 2.0 * vel) * t);
+
+  //   float phase = 240.0 * t;
+  //   phase += phase + 0.1 * sin(TAU * phase);
+  //   vec2 wave = shotgun(phase, 2.0, 0.4, exp2(mix(1.0, 3.0, vel)));
+
+  //   dest += 0.16 * mix(0.3, 1.0, duck) * tanh(8.0 * env * wave);
+  // }
+
   // { // open hihat
   //   float t = mod(time.x - 0.5 * B2T, B2T);
   //   float q = B2T - t;
@@ -321,20 +335,6 @@ vec2 mainAudio(vec4 time) {
   //   }
 
   //   dest += 0.2 * env * duck * tanh(sum);
-  // }
-
-  // { // shaker
-  //   float t = mod(time.x, S2T);
-  //   float st = mod(floor(time.y / S2T), 8.0);
-
-  //   float vel = fract(st * 0.59 + 0.23);
-  //   float env = smoothstep(0.0, 0.02, t) * exp(-exp2(5.0 - 2.0 * vel) * t);
-
-  //   float phase = 240.0 * t;
-  //   phase += phase + 0.1 * sin(TAU * phase);
-  //   vec2 wave = shotgun(phase, 2.0, 0.4, exp2(mix(1.0, 3.0, vel)));
-
-  //   dest += 0.16 * mix(0.3, 1.0, duck) * tanh(8.0 * env * wave);
   // }
 
   // { // ride

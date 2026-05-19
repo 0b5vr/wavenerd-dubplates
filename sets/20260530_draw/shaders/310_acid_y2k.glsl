@@ -253,7 +253,7 @@ vec2 mainAudio(vec4 time) {
     time = mix(
       time,
       glitchTime(time),
-      param_knob0.x
+      step(0.5, param_knob0.x)
     );
   }
 
@@ -291,40 +291,28 @@ vec2 mainAudio(vec4 time) {
     }
   }
 
-  // { // hihat
-  //   vec4 seq = seq16(time.y, 0xffff);
-  //   float t = seq.t;
-  //   float q = seq.q;
+  { // toms
+    vec4 seqh = seq16(time.y, 0x1010);
+    vec4 seql = seq16(time.y, 0x0404);
+    float t = min(seqh.t, seql.t);
+    float q = min(seqh.q, seql.q);
+    float isHi = step(seqh.t, seql.t);
 
-  //   float env = smoothstep(0.0, 0.01, q);
-  //   env *= exp2(-150.0 * t);
+    float env = exp(-20.0 * t);
+    float freq = mix(80.0, 110.0, isHi);
+    float phase = (
+      t
+      - 0.03 * exp2(-40.0 * t)
+      - 0.01 * exp2(-150.0 * t)
+    );
+    phase *= TAU * freq;
 
-  //   vec2 wave = shotgun(1600.0 * t, 3.0, 0.0, 1.0);
-  //   wave = tanh(20.0 * wave);
+    float fm = 3.0 * exp2(-10.0 * t) * sin(1.3 * phase);
+    vec2 wave = cis(phase + fm + 10.0 * t);
+    wave *= mix(vec2(0.5, 1.0), vec2(1.0, 0.5), isHi);
 
-  //   dest += 0.2 * mix(0.1, 1.0, duck) * env * wave;
-  // }
-
-  // { // open hihat
-  //   vec4 seq = seq16(time.y, 0x2222);
-  //   float t = seq.y;
-
-  //   vec2 sum = vec2(0.0);
-
-  //   repeat(i, 8) {
-  //     vec3 dice = hash3f(vec3(i));
-  //     vec3 dice2 = hash3f(dice);
-
-  //     vec2 wave = vec2(0.0);
-  //     wave = 6.0 * exp2(-3.0 * t) * sin(wave + exp2(13.10 + 0.1 * dice.x) * t + dice2.xy);
-  //     wave = 3.0 * exp2(-4.0 * t) * sin(wave + exp2(11.28 + 0.1 * dice.y) * t + dice2.yz);
-  //     wave = 1.0 * exp2(-20.0 * t) * sin(wave + exp2(13.12 + 0.2 * dice.z) * t + dice2.zx);
-
-  //     sum += wave;
-  //   }
-
-  //   dest += 0.15 * mix(0.0, 1.0, duck) * tanh(2.0 * sum);
-  // }
+    dest += 0.2 * mix(0.8, 1.0, duck) * tanh(2.0 * env * wave);
+  }
 
   // { // perc
   //   vec4 seq = seq16(time.y, 0xabda);
@@ -355,6 +343,20 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.4 * mix(0.1, 1.0, duck) * env * wave;
   // }
 
+  // { // hihat
+  //   vec4 seq = seq16(time.y, 0xffff);
+  //   float t = seq.t;
+  //   float q = seq.q;
+
+  //   float env = smoothstep(0.0, 0.01, q);
+  //   env *= exp2(-150.0 * t);
+
+  //   vec2 wave = shotgun(1600.0 * t, 3.0, 0.0, 1.0);
+  //   wave = tanh(20.0 * wave);
+
+  //   dest += 0.2 * mix(0.1, 1.0, duck) * env * wave;
+  // }
+
   // { // clap
   //   vec4 seq = seq16(time.y, 0x0808);
   //   float t = seq.t;
@@ -377,46 +379,39 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.4 * tanh(20.0 * env * wave);
   // }
 
-  // { // hi tom
-  //   vec4 seq = seq16(time.y, 0x1010);
-  //   float t = seq.y;
-  //   float q = seq.w;
+  // { // cowbell
+  //   vec4 seq = seq16(time.y, 0x0100);
+  //   float t = seq.t;
+  //   float q = seq.q;
 
-  //   float env = exp(-20.0 * t);
-  //   float freq = 110.0;
-  //   float phase = (
-  //     t
-  //     - 0.03 * exp2(-40.0 * t)
-  //     - 0.01 * exp2(-150.0 * t)
-  //   );
-  //   phase *= TAU * freq;
+  //   float env = exp2(-t * 30.0);
 
-  //   float fm = 3.0 * exp2(-10.0 * t) * sin(1.3 * phase);
-  //   vec2 wave = cis(phase + fm + 10.0 * t);
-  //   wave.x *= 0.5;
+  //   vec2 phase = t * vec2(450.0, 460.0);
 
-  //   dest += 0.2 * mix(0.8, 1.0, duck) * tanh(2.0 * env * wave);
+  //   vec2 wave = tri(phase) + tri(1.48 * phase) + tri(2.21 * phase);
+
+  //   dest += 0.16 * mix(0.1, 1.0, duck) * tanh(8.0 * env * wave);
   // }
 
-  // { // low tom
-  //   vec4 seq = seq16(time.y, 0x0404);
+  // { // open hihat
+  //   vec4 seq = seq16(time.y, 0x2222);
   //   float t = seq.y;
-  //   float q = seq.w;
 
-  //   float env = exp(-20.0 * t);
-  //   float freq = 80.0;
-  //   float phase = (
-  //     t
-  //     - 0.03 * exp2(-40.0 * t)
-  //     - 0.01 * exp2(-150.0 * t)
-  //   );
-  //   phase *= TAU * freq;
+  //   vec2 sum = vec2(0.0);
 
-  //   float fm = 3.0 * exp2(-10.0 * t) * sin(1.3 * phase);
-  //   vec2 wave = cis(phase + fm + 10.0 * t);
-  //   wave.y *= 0.5;
+  //   repeat(i, 8) {
+  //     vec3 dice = hash3f(vec3(i));
+  //     vec3 dice2 = hash3f(dice);
 
-  //   dest += 0.2 * mix(0.8, 1.0, duck) * tanh(2.0 * env * wave);
+  //     vec2 wave = vec2(0.0);
+  //     wave = 6.0 * exp2(-3.0 * t) * sin(wave + exp2(13.10 + 0.1 * dice.x) * t + dice2.xy);
+  //     wave = 3.0 * exp2(-4.0 * t) * sin(wave + exp2(11.28 + 0.1 * dice.y) * t + dice2.yz);
+  //     wave = 1.0 * exp2(-20.0 * t) * sin(wave + exp2(13.12 + 0.2 * dice.z) * t + dice2.zx);
+
+  //     sum += wave;
+  //   }
+
+  //   dest += 0.15 * mix(0.0, 1.0, duck) * tanh(2.0 * sum);
   // }
 
   // { // ride
@@ -432,20 +427,6 @@ vec2 mainAudio(vec4 time) {
   //   wave = tanh(4.0 * wave);
 
   //   dest += 0.4 * mix(0.1, 1.0, duck) * env * wave;
-  // }
-
-  // { // cowbell
-  //   vec4 seq = seq16(time.y, 0x0100);
-  //   float t = seq.t;
-  //   float q = seq.q;
-
-  //   float env = exp2(-t * 30.0);
-
-  //   vec2 phase = t * vec2(450.0, 460.0);
-
-  //   vec2 wave = tri(phase) + tri(1.48 * phase) + tri(2.21 * phase);
-
-  //   dest += 0.16 * mix(0.1, 1.0, duck) * tanh(8.0 * env * wave);
   // }
 
   { // snare roll
@@ -586,8 +567,9 @@ vec2 mainAudio(vec4 time) {
   //     float phase = t * freq + dice.y;
   //     phase = lofi(phase, 1.0 / 32.0);
 
-  //     float width = 0.8 + 1.5 * exp2(-1.0 * t);
-  //     vec2 wave = vec2(cheapfiltersaw(width * tri(phase), 0.8));
+  //     vec2 wave = vec2(
+  //       cheapfiltersaw(phase, 1.0) - sin(TAU * phase + PI)
+  //     );
 
   //     sum += fade * tanh(wave) * rotate2D(2.4 * float(iUnison));
   //   }
