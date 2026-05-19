@@ -289,7 +289,7 @@ vec2 mainAudio(vec4 time) {
   //   float t = seq.t;
   //   float q = seq.q;
 
-  //   float accent = seq16(time.y, 0x2222).s == seq.s ? 1.0 : 0.0;
+  //   float accent = seq16(time.y, 0x0000).s == seq.s ? 1.0 : 0.0;
 
   //   float env = smoothstep(0.0, 0.01, q);
   //   env *= exp2(-mix(100.0, 5.0, accent) * t);
