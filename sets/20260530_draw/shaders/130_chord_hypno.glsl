@@ -294,6 +294,26 @@ vec2 mainAudio(vec4 time) {
     dest += 0.6 * (1.0 - p3) * mix(0.0, 1.0, duck) * env * wave;
   }
 
+  { // toms
+    vec4 seqh = seq16(time.y, 0x2121);
+    vec4 seql = seq16(time.y, 0x1412);
+    float t = min(seqh.t, seql.t);
+    float q = min(seqh.q, seql.q);
+    float isHi = step(seqh.t, seql.t);
+
+    float env = exp(-20.0 * t);
+    float freq = mix(110.0, 180.0, isHi);
+    float phase = freq * (
+      t
+      - 0.02 * exp2(-300.0 * t)
+    );
+
+    vec2 wave = cis(TAU * phase + sin(TAU * phase) + 10.0 * t);
+    wave *= mix(vec2(0.5, 1.0), vec2(1.0, 0.5), isHi);
+
+    dest += 0.2 * mix(0.8, 1.0, duck) * tanh(2.0 * env * wave);
+  }
+
   // { // hihat
   //   vec4 seq = seq16(time.y, 0xffff);
   //   float t = seq.t;
