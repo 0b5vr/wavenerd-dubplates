@@ -268,6 +268,22 @@ vec2 mainAudio(vec4 time) {
     dest += 0.5 * mix(0.7, 1.0, duck) * bassduck * env * osc;
   }
 
+  { // rim
+    vec4 seq = seq16(time.y, 0xffff);
+    float st = seq.s + 16.0 * floor(time.z / (16.0 * S2T));
+    float t = seq.t;
+
+    float env = exp(-300.0 * t);
+
+    float gate = step(fract(st * 0.721 + 0.2), 0.6);
+    vec2 osc = gate * vec2(tanh(4.0 * (
+      +tri(t * 400.0 - 0.5 * env)
+      +tri(t * 1500.0 - 0.5 * env)
+    )));
+    osc *= rotate2D(st);
+    dest += 0.14 * mix(0.5, 1.0, duck) * env * osc;
+  }
+
   // { // hihat
   //   vec4 seq = seq16(time.y, 0xffff);
   //   float t = seq.t;
@@ -298,22 +314,6 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.3 * mix(0.1, 1.0, duck) * env * wave;
   // }
 
-  { // rim
-    vec4 seq = seq16(time.y, 0xffff);
-    float st = seq.s + 16.0 * floor(time.z / (16.0 * S2T));
-    float t = seq.t;
-
-    float env = exp(-300.0 * t);
-
-    float gate = step(fract(st * 0.721 + 0.2), 0.6);
-    vec2 osc = gate * vec2(tanh(4.0 * (
-      +tri(t * 400.0 - 0.5 * env)
-      +tri(t * 1500.0 - 0.5 * env)
-    )));
-    osc *= rotate2D(st);
-    dest += 0.14 * mix(0.5, 1.0, duck) * env * osc;
-  }
-
   { // crash
     float t = mod(time.z, 64.0 * B2T);
 
@@ -324,41 +324,43 @@ vec2 mainAudio(vec4 time) {
 
   { // riff
     vec2 sum = vec2(0.0);
-    repeat(i, 6) {
+    repeat(i, 9) {
       vec4 tdelay = mod(time - float(i) * 3.0 * S2T, timeLength);
       vec4 seq = seq16(tdelay.y, 0xffff);
       float st = seq.s + 16.0 * floor(tdelay.z / (16.0 * S2T));
       float t = seq.t;
       float q = seq.q;
-  
-      vec3 dice;
-  
+
       float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q);
       env *= exp2(-exp2(2.0 + 5.0 * fract(0.626 * st)) * t);
-  
+
       float pitch = 24.0 + TRANSPOSE;
 
-      // octave shift
-      dice = hash3f(vec3(st, 10, 18));
-      pitch += 12.0 * step(dice.x, 0.4) * exp2(floor(3.0 * dice.y));
+      { // octave shift
+        vec3 dice = hash3f(vec3(st, 10, 18));
+        pitch += 12.0 * step(dice.x, 0.4) * floor(1.0 + 4.0 * dice.y);
+      }
 
-      // chord shift
-      dice = hash3f(vec3(st, 34, 28));
-      pitch += step(dice.x, 0.2) * float(CHORD[int(float(N_CHORD_NOTES) * dice.y)]);
+      { // chord shift
+        vec3 dice = hash3f(vec3(st, 34, 28));
+        pitch += step(dice.x, 0.2) * float(CHORD[int(float(N_CHORD_NOTES) * dice.y)]);
+      }
 
-      // unquantized shift
-      dice = hash3f(vec3(st, 40, 559));
-      pitch += 12.0 * step(dice.x, 0.2) * exp2(dice.y);
-  
+      { // unquantized shift
+        vec3 dice = hash3f(vec3(st, 40, 559));
+        pitch += 12.0 * step(dice.x, 0.2) * exp2(dice.y);
+      }
+
       float freq = p2f(pitch);
       float phase = freq * t;
 
-      // fm
-      dice = hash3f(vec3(st, 128, 111));
-      float fmmul = exp2(step(dice.x, 0.2) * exp2(2.0 * dice.y));
-      float fm = sin(fmmul * TAU * phase);
-      fm *= exp2(-2.0 + 3.0 * fract(0.418 * st));
-      phase += fm;
+      { // fm
+        vec3 dice = hash3f(vec3(st, 128, 111));
+        float fmmul = exp2(step(dice.x, 0.2) * exp2(2.0 * dice.y));
+        float fm = sin(fmmul * TAU * phase);
+        fm *= exp2(-2.0 + 3.0 * fract(0.418 * st));
+        phase += fm;
+      }
 
       vec2 osc = vec2(0.0);
       osc += cis(TAU * phase + TAU * time.z / B2T);
