@@ -98,7 +98,7 @@ vec3 cyclic(vec3 p, float pers, float lacu) {
   return sum.xyz / sum.w;
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
 
   { // chord stuff
@@ -137,5 +137,10 @@ vec2 mainAudio(vec4 time) {
     }
   }
 
-  return clip(1.3 * tanh(0.9 * dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  return dest;
 }

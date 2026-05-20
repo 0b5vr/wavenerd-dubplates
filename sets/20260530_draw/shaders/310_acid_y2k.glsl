@@ -233,7 +233,7 @@ vec4 glitchTime(vec4 time) {
   return mod(time, timeLength);
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
   float duck = 1.0;
@@ -577,5 +577,11 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.07 * sum * mix(0.2, 1.0, duck);
   // }
 
-  return clip(1.2 * tanh(dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  dest *= 0.8;
+  return dest;
 }

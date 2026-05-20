@@ -172,7 +172,7 @@ vec2 cheapnoise(float t) {
   return 2.0 * v;
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
   float sidechain = 1.0;
 
@@ -428,5 +428,11 @@ vec2 mainAudio(vec4 time) {
     dest += 0.1 * mix(0.1, 1.0, sidechain) * sum;
   }
 
-  return clip(1.3 * tanh(dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  dest *= 1.1;
+  return dest;
 }

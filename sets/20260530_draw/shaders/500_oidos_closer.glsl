@@ -42,7 +42,7 @@ vec3 hash3f(vec3 v) {
   return vec3(hash3u(x)) / float(-1u);
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
 
   { // oidos drone
@@ -92,5 +92,10 @@ vec2 mainAudio(vec4 time) {
     dest += sum;
   }
 
-  return clip(1.3 * tanh(dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  return dest;
 }

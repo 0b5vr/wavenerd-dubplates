@@ -226,7 +226,7 @@ vec2 twoPoleHPF(float freq, float cutoff, float reso) {
   );
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
   float duck = 1.0;
@@ -520,5 +520,10 @@ vec2 mainAudio(vec4 time) {
     dest += 0.3 * mix(0.1, 1.0, duck) * sum;
   }
 
-  return clip(1.3 * tanh(dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  return dest;
 }

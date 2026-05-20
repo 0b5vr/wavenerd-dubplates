@@ -687,5 +687,6 @@ vec2 mainAudioDry(vec4 time) {
 
 vec2 mainAudio(vec4 time) {
   vec2 dest = mainAudioDry(time);
-  return clip(1.2 * tanh(dest));
+  dest *= 0.8;
+  return dest;
 }

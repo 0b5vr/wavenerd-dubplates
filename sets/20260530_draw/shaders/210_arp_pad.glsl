@@ -218,7 +218,7 @@ vec2 ladderLPF(float freq, float cutoff, float reso) {
   );
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
   float duck = 1.0;
@@ -266,7 +266,7 @@ vec2 mainAudio(vec4 time) {
     vec2 osc = vec2(0.0);
     osc += sin(TAU * phase);
 
-    dest += 0.5 * mix(0.0, 1.0, duck) * env * osc;
+    dest += 0.7 * mix(0.0, 1.0, duck) * env * osc;
   }
 
   { // hihat
@@ -397,5 +397,10 @@ vec2 mainAudio(vec4 time) {
     dest += 0.12 * sum * mix(0.2, 1.0, duck);
   }
 
-  return clip(1.3 * tanh(dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  return dest;
 }

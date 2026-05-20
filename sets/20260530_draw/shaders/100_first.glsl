@@ -241,7 +241,7 @@ vec2 twoPoleHPF(float freq, float cutoff, float reso) {
   );
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
   float duck = 1.0;
@@ -269,7 +269,7 @@ vec2 mainAudio(vec4 time) {
 
     //   float wave = tanh(sin(TAU * phase));
 
-    //   dest += 0.8 * env * wave;
+    //   dest += 0.7 * env * wave;
     // }
   }
 
@@ -284,7 +284,7 @@ vec2 mainAudio(vec4 time) {
   //   float phase = freq * t;
   //   vec2 wave = vec2(tanh(sin(TAU * phase)));
 
-  //   dest += 0.6 * (1.0 - p3) * mix(0.0, 1.0, duck) * env * wave;
+  //   dest += 0.5 * (1.0 - p3) * mix(0.0, 1.0, duck) * env * wave;
   // }
 
   // { // low freq noise
@@ -316,7 +316,7 @@ vec2 mainAudio(vec4 time) {
 
   //   dest += 0.3 * mix(0.1, 1.0, duck) * env * wave;
   // }
-  
+
   // { // shaker
   //   float t = mod(time.x, S2T);
   //   float st = mod(floor(time.y / S2T), 8.0);
@@ -338,7 +338,7 @@ vec2 mainAudio(vec4 time) {
   //   vec2 wave = shotgun(3100.0 * t, 1.2, 0.1, 2.0);
   //   wave = tanh(3.0 * env * wave);
 
-  //   dest += 0.6 * mix(0.1, 1.0, duck) * wave;
+  //   dest += 0.5 * mix(0.1, 1.0, duck) * wave;
   // }
 
   // { // ride
@@ -362,7 +362,7 @@ vec2 mainAudio(vec4 time) {
   //     sum += wave;
   //   }
 
-  //   dest += 0.07 * env * duck * tanh(sum);
+  //   dest += 0.06 * env * duck * tanh(sum);
   // }
 
   // { // clap
@@ -378,7 +378,7 @@ vec2 mainAudio(vec4 time) {
 
   //   vec2 wave = cyclic(vec3(4.0 * cis(1100.0 * t), 1540.0 * t), 0.5, 2.0).xy;
 
-  //   dest += 0.16 * mix(0.5, 1.0, duck) * tanh(20.0 * env * wave);
+  //   dest += 0.12 * mix(0.5, 1.0, duck) * tanh(20.0 * env * wave);
   // }
 
   // { // crash
@@ -512,6 +512,11 @@ vec2 mainAudio(vec4 time) {
     dest += 0.4 * mix(0.3, 1.0, duck) * sum;
   }
 
-  dest *= 1.4;
-  return clip(1.2 * tanh(dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  dest *= 1.3;
+  return dest;
 }

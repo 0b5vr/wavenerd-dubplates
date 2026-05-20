@@ -218,7 +218,7 @@ vec2 twoPoleHPF(float freq, float cutoff, float reso) {
 const int N_CHORD_NOTES = 8;
 const int CHORD[] = int[](0, 7, 10, 12, 14, 15, 17, 19, 22);
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
   float duck = 1.0;
@@ -426,5 +426,11 @@ vec2 mainAudio(vec4 time) {
     dest += 0.06 * env * mix(0.5, 1.0, duck) * sum;
   }
 
-  return clip(1.3 * tanh(dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  dest *= 1.2;
+  return dest;
 }

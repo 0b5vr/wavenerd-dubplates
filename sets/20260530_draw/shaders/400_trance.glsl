@@ -200,7 +200,7 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
   return sum / 64.0;
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
   float duck = smoothstep(0.0, 0.4, time.x) * smoothstep(0.0, 0.001, B2T - time.x);
@@ -548,5 +548,11 @@ vec2 mainAudio(vec4 time) {
     dest += 0.03 * sum * mix(0.5, 1.0, duck);
   }
 
-  return clip(1.2 * tanh(0.9 * dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  dest *= 0.8;
+  return dest;
 }
