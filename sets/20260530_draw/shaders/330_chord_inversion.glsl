@@ -210,7 +210,7 @@ vec2 mainAudioDry(vec4 time) {
     duck = pow(duck, 2.0);
 
     float env = smoothstep(0.0, 0.001, q) * exp2(-20.0 * max(t - 0.1, 0.0));
-      env *= mix(1.0, exp2(-80.0 * t), p3); // hpf-like
+    env *= mix(1.0, exp2(-80.0 * t), p3); // hpf-like
 
     {
       float phase = (
