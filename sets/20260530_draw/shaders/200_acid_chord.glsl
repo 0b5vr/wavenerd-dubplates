@@ -10,7 +10,7 @@
 #define tri(x) (1.0 - 4.0 * abs(fract((x) + 0.25) - 0.5))
 #define repeat(i, n) for (int i = ZERO; i < n; i++)
 #define p2f(i) (exp2(((i)-69.)/12.)*440.)
-#define TRANSPOSE 6.0
+#define TRANSPOSE 5.0
 
 const float SWING = 0.52;
 
