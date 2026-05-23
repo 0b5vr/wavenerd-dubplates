@@ -133,26 +133,24 @@ vec4 quant(float x, float ks, float kt) {
 
 vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
-  float sidechain;
+  float duck = smoothstep(0.0, 0.4, time.x) * smoothstep(0.0, 0.001, B2T - time.x);
 
 
   { // kick
     float t = time.x;
     float q = B2T - t;
-    sidechain = 0.2 + 0.8 * smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
+    duck = smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
 
     float env = smoothstep(0.0, 0.001, q) * smoothstep(0.3, 0.1, t);
     env *= mix(1.0, exp2(-50.0 * t), p3); // hi-pass like
 
-    {
-      float wave = sin(
-        250.0 * t
-        - 30.0 * exp(-t * 20.0)
-        - 30.0 * exp(-t * 30.0)
-        - 10.0 * exp(-t * 300.0)
-      );
-      dest += 0.6 * tanh(1.0 * env * wave);
-    }
+    float wave = sin(
+      250.0 * t
+      - 30.0 * exp(-t * 20.0)
+      - 30.0 * exp(-t * 30.0)
+      - 10.0 * exp(-t * 300.0)
+    );
+    dest += 0.6 * tanh(1.0 * env * wave);
   }
 
   // { // bass
@@ -182,7 +180,7 @@ vec2 mainAudioDry(vec4 time) {
   //   // sub bass
   //   wave += tanh(sin(TAU * freq * t));
 
-  //   dest += 0.3 * env * sidechain * wave;
+  //   dest += 0.3 * env * duck * wave;
   // }
 
   // { // hihat
@@ -196,7 +194,7 @@ vec2 mainAudioDry(vec4 time) {
   //     0.01
   //   );
   //   vec2 wave = shotgun(6000.0 * t, 2.0, 0.0, 1.0);
-  //   dest += 0.2 * env * sidechain * tanh(8.0 * wave);
+  //   dest += 0.2 * env * mix(0.3, 1.0, duck) * tanh(8.0 * wave);
   // }
 
   { // perc
@@ -219,7 +217,7 @@ vec2 mainAudioDry(vec4 time) {
       vec2 wave = cis(TAU * phase);
       sum += env * delayDecay * tanh(2.0 * wave);
     }
-    dest += 0.1 * sidechain * sum;
+    dest += 0.1 * mix(0.2, 1.0, duck) * sum;
   }
 
   { // psysaw
@@ -245,7 +243,7 @@ vec2 mainAudioDry(vec4 time) {
 
     float env = mix(exp(-t), exp(-10.0 * t), 0.7);
     vec2 wave = shotgun(3800.0 * t, 2.0, 0.0, 3.0);
-    dest += 0.1 * env * mix(0.3, 1.0, sidechain) * tanh(8.0 * wave);
+    dest += 0.1 * env * mix(0.3, 1.0, duck) * tanh(8.0 * wave);
   }
 
   { // sine stab
@@ -284,7 +282,7 @@ vec2 mainAudioDry(vec4 time) {
 
       sum += env * delayDecay * wave * rotate2D(time.w);
     }
-    dest += 0.07 * mix(0.4, 1.0, sidechain) * sum;
+    dest += 0.07 * mix(0.5, 1.0, duck) * sum;
   }
 
   { // choir
@@ -327,7 +325,7 @@ vec2 mainAudioDry(vec4 time) {
       sum += amp * wave * rotate2D(float(iUnison));
     }
 
-    dest += 0.01 * p0 * sum * mix(0.2, 1.0, sidechain);
+    dest += 0.01 * p0 * sum * mix(0.4, 1.0, duck);
   }
 
   return dest;
