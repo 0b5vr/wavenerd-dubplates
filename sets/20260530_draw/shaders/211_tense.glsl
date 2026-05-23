@@ -131,7 +131,7 @@ vec4 quant(float x, float ks, float kt) {
   return quant(x, ks, kt, i);
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
   float sidechain;
 
@@ -330,5 +330,11 @@ vec2 mainAudio(vec4 time) {
     dest += 0.01 * p0 * sum * mix(0.2, 1.0, sidechain);
   }
 
-  return tanh(1.5 * dest);
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  dest *= 1.5;
+  return dest;
 }
