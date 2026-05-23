@@ -191,7 +191,31 @@ vec2 mainAudioDry(vec4 time) {
 
     float env = exp(-exp2(5.0) * t) * smoothstep(0.0, 0.01, q);
     vec2 wave = shotgun(3700.0 * t, 2.4, 0.0, 1.0);
-    dest += 0.13 * env * duck * tanh(8.0 * wave);
+    dest += 0.13 * env * mix(0.4, 1.0, duck) * tanh(8.0 * wave);
+  }
+
+  { // open hihat
+    float t = mod(time.x - 0.5 * B2T, B2T);
+    float q = B2T - t;
+
+    float env = smoothstep(0.0, 0.01, q);
+
+    vec2 sum = vec2(0.0);
+    repeat(i, 16) {
+      float odd = float(i % 2);
+      float tt = (t + 1.0) * mix(1.0, 1.001, odd);
+      vec3 dice = hash3f(vec3(i / 2));
+      vec3 dice2 = hash3f(dice);
+
+      vec2 wave = vec2(0.0);
+      wave = 4.5 * exp2(-4.0 * t) * sin(wave + exp2(13.10 + 0.1 * dice.x) * tt + dice2.xy);
+      wave = 3.2 * exp2(-1.0 * t) * sin(wave + exp2(12.18 + 0.3 * dice.y) * tt + dice2.yz);
+      wave = 1.0 * exp2(-30.0 * t) * sin(wave + exp2(13.82 + 0.2 * dice.z) * tt + dice2.zx);
+
+      sum += wave * mix(1.0, 0.5, odd);
+    }
+
+    dest += 0.16 * env * mix(0.2, 1.0, duck) * tanh(sum);
   }
 
   { // clap
@@ -410,6 +434,6 @@ vec2 mainAudioDry(vec4 time) {
 
 vec2 mainAudio(vec4 time) {
   vec2 dest = mainAudioDry(time);
-  dest *= 1.2;
+  dest *= 1.1;
   return dest;
 }
