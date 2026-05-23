@@ -18,10 +18,12 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float LN2 = log(2.0);
 
+uniform vec4 param_knob1; // sweep
 uniform vec4 param_knob2; // snare roll
 uniform vec4 param_knob3; // kick cut
 uniform vec4 param_knob4; // arp cutoff
 
+#define p1 paramFetch(param_knob1)
 #define p2 paramFetch(param_knob2)
 #define p3 paramFetch(param_knob3)
 #define p4 paramFetch(param_knob4)
@@ -124,21 +126,6 @@ mat3 orthBas(vec3 z) {
   vec3 x = normalize(cross(vec3(0, 1, 0), z));
   vec3 y = cross(z, x);
   return mat3(x, y, z);
-}
-
-float glidephase(float t, float t1, float p0, float p1) {
-  if (p0 == p1) {
-    return t * p2f(p1);
-  }
-
-  float m0 = (p0 - 69.0) / 12.0;
-  float m1 = (p1 - 69.0) / 12.0;
-  float b = (m1 - m0) / t1;
-
-  return (
-    + p2f(p0) * (pow(2.0, b * min(t, t1)) - 1.0) / b / LN2
-    + max(0.0, t - t1) * p2f(p1)
-  );
 }
 
 vec3 cyclic(vec3 p, float pers, float lacu) {
@@ -456,6 +443,20 @@ vec2 mainAudioDry(vec4 time) {
     );
 
     dest += 0.3 * p2 * fade * mix(0.5, 1.0, duck) * tanh(4.0 * env * wave);
+  }
+
+  if (time.z > 48.0 * B2T) { // sweep
+    float l = 16.0 * B2T;
+    float t = tmod(time, l);
+    float env = smoothstep(0.0, 0.01, t) * smoothstep(0.0, 0.01, l - t);
+    env *= pow(t / l, 2.0);
+
+    vec2 wave = vec2(0.0);
+    wave += cheapnoise(128.0 * t);
+    wave += cheapnoise(128.0 * (t + 0.002 * exp(-0.4 * t)));
+    wave += cheapnoise(128.0 * (t + 0.004 * exp(-0.4 * t)));
+
+    dest += 0.1 * p1 * env * wave;
   }
 
   { // arp
