@@ -336,9 +336,10 @@ vec2 mainAudioDry(vec4 time) {
   }
 
   if (time.z > 48.0 * B2T) { // sweep
-    float t = tmod(time, 16.0 * B2T);
-
-    float env = smoothstep(0.0, 16.0 * B2T, t);
+    float l = 16.0 * B2T;
+    float t = tmod(time, l);
+    float env = smoothstep(0.0, 0.01, t) * smoothstep(0.0, 0.01, l - t);
+    env *= pow(t / l, 2.0);
 
     vec2 osc = vec2(0.0);
 
