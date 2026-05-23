@@ -1,3 +1,4 @@
+// - enable sweep
 // - early return the chord riff to solo
 // - substitute the chord riff to play chord + arp + fx
 // - DON'T FORGET TO ENABLE THE BASS CHORD PROGRESSION
@@ -26,9 +27,11 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float LN2 = log(2.0);
 
+uniform vec4 param_knob1; // sweep
 uniform vec4 param_knob2; // snare roll
 uniform vec4 param_knob3; // kick cut
 
+#define p1 paramFetch(param_knob1)
 #define p2 paramFetch(param_knob2)
 #define p3 paramFetch(param_knob3)
 
@@ -116,18 +119,18 @@ mat3 orthBas(vec3 z) {
   return mat3(x, y, z);
 }
 
-float glidephase(float t, float t1, float p0, float p1) {
-  if (p0 == p1) {
-    return t * p2f(p1);
+float glidephase(float t, float t1, float pitch0, float pitch1) {
+  if (pitch0 == pitch1) {
+    return t * p2f(pitch1);
   }
 
-  float m0 = (p0 - 69.0) / 12.0;
-  float m1 = (p1 - 69.0) / 12.0;
+  float m0 = (pitch0 - 69.0) / 12.0;
+  float m1 = (pitch1 - 69.0) / 12.0;
   float b = (m1 - m0) / t1;
 
   return (
-    + p2f(p0) * (pow(2.0, b * min(t, t1)) - 1.0) / b / LN2
-    + max(0.0, t - t1) * p2f(p1)
+    + p2f(pitch0) * (pow(2.0, b * min(t, t1)) - 1.0) / b / LN2
+    + max(0.0, t - t1) * p2f(pitch1)
   );
 }
 
@@ -202,7 +205,7 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
 vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
-  float duck = 1.0;
+  float duck = smoothstep(0.0, 0.4, time.x) * smoothstep(0.0, 0.001, B2T - time.x);
   bool isFillIn = false;
   // { // enable fill-in
   //   isFillIn = time.z > 60.0 * B2T;
@@ -230,22 +233,20 @@ vec2 mainAudioDry(vec4 time) {
       smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q)
     );
 
-    {
-      float env = smoothstep(0.0, 0.001, q);
-      env *= smoothstep(0.25, 0.1, t);
-      env *= mix(1.0, exp2(-80.0 * t), p3); // hpf-like
+    float env = smoothstep(0.0, 0.001, q);
+    env *= smoothstep(0.25, 0.1, t);
+    env *= mix(1.0, exp2(-80.0 * t), p3); // hpf-like
 
-      float phase = (
-        52.0 * t
-        - 4.0 * exp2(-t * 20.0)
-        - 4.0 * exp2(-t * 80.0)
-        - 3.0 * exp2(-t * 400.0)
-      );
+    float phase = (
+      52.0 * t
+      - 4.0 * exp2(-t * 20.0)
+      - 4.0 * exp2(-t * 80.0)
+      - 3.0 * exp2(-t * 400.0)
+    );
 
-      float wave = sin(1.7 * sin(TAU * phase));
+    float wave = sin(1.7 * sin(TAU * phase));
 
-      dest += 0.6 * env * wave;
-    }
+    dest += 0.6 * env * wave;
   }
 
   { // rim
@@ -406,6 +407,27 @@ vec2 mainAudioDry(vec4 time) {
     dest += 0.2 * p2 * fade * mix(0.5, 1.0, duck) * tanh(8.0 * env * wave);
   }
 
+  if (time.z > 48.0 * B2T) { // sweep
+    float l = 16.0 * B2T;
+    float t = tmod(time, l);
+    float env = smoothstep(0.0, 0.01, t) * smoothstep(0.0, 0.01, l - t);
+    env *= pow(t / l, 2.0);
+
+    vec2 sum = vec2(0.0);
+    repeat(i, 16) {
+      vec3 dice = hash3f(vec3(i / 4, 20, 228));
+
+      float tt = t * (1.0 + 0.0006 * float(i % 4));
+
+      float phase = 200.0 * (exp(tt / 4.0) * 4.0) * exp2(0.1 * dice.x);
+      phase += sin(TAU * phase * exp2(0.5 * dice.y));
+      phase += 0.2 * sin(6.0 * TAU * phase * exp2(dice.z));
+      sum += cis(TAU * phase) / 16.0;
+    }
+
+    dest += 0.32 * p1 * mix(0.4, 1.0, duck) * env * sum;
+  }
+
   { // crash
     float t = mod(time.z, 64.0 * B2T);
     if (isFillIn) {
@@ -418,7 +440,10 @@ vec2 mainAudioDry(vec4 time) {
   }
 
   { // bass
+    float l = 4.0 * B2T;
     float t = time.y;
+
+    float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, l - t);
 
     int iProg = 0;
     // { // progression
