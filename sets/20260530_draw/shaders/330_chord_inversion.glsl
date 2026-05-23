@@ -18,9 +18,6 @@ const float SWING = 0.56;
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float LN2 = log(2.0);
-const float MIN3 = pow(2.0, 3.0 / 12.0);
-const float P4 = pow(2.0, 5.0 / 12.0);
-const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob1; // sweep
 uniform vec4 param_knob2; // snare roll
@@ -98,30 +95,6 @@ vec4 seq16(float t, int seq) {
     nextStep,
     nextTime - t
   );
-}
-
-vec4 quant(float t, float interval, out float i) {
-  interval = max(interval, 1.0);
-  float st = t2sSwing(t);
-
-  i = floor(floor(st) / interval);
-
-  float prevStep = ceil(i * interval);
-  float prevTime = s2tSwing(prevStep);
-  float nextStep = ceil((i + 1.0) * interval);
-  float nextTime = s2tSwing(nextStep);
-
-  return vec4(
-    prevStep,
-    t - prevTime,
-    nextStep,
-    nextTime - t
-  );
-}
-
-vec4 quant(float t, float interval) {
-  float _;
-  return quant(t, interval, _);
 }
 
 vec2 shotgun(float t, float spread, float snap, float fm) {
@@ -206,32 +179,6 @@ vec2 cheapnoise(float t) {
   v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
 
   return 2.0 * v;
-}
-
-vec2 ladderLPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 4.0 * omega * (omegaSq - 1.0);
-  float b = 4.0 * reso + omegaSq * omegaSq - 6.0 * omegaSq + 1.0;
-
-  return vec2(
-    1.0 / sqrt(a * a + b * b),
-    atan(a, b)
-  );
-}
-
-vec2 twoPoleHPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 2.0 * (1.0 - reso) * omega;
-  float b = omegaSq - 1.0;
-
-  return vec2(
-    omegaSq / sqrt(a * a + b * b),
-    atan(a, b)
-  );
 }
 
 vec2 mainAudioDry(vec4 time) {

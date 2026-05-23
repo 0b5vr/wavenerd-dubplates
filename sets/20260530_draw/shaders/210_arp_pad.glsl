@@ -16,7 +16,6 @@ const float SWING = 0.5;
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
-const float LN2 = log(2.0);
 
 uniform vec4 param_knob0; // pad level
 uniform vec4 param_knob3; // kick cut
@@ -128,21 +127,6 @@ mat3 orthBas(vec3 z) {
   return mat3(x, y, z);
 }
 
-float glidephase(float t, float t1, float pitch0, float pitch1) {
-  if (pitch0 == pitch1) {
-    return t * p2f(pitch1);
-  }
-
-  float m0 = (pitch0 - 69.0) / 12.0;
-  float m1 = (pitch1 - 69.0) / 12.0;
-  float b = (m1 - m0) / t1;
-
-  return (
-    + p2f(pitch0) * (pow(2.0, b * min(t, t1)) - 1.0) / b / LN2
-    + max(0.0, t - t1) * p2f(pitch1)
-  );
-}
-
 vec3 cyclic(vec3 p, float pers, float lacu) {
   vec4 sum = vec4(0);
   mat3 rot = orthBas(vec3(2, -3, 1));
@@ -158,38 +142,6 @@ vec3 cyclic(vec3 p, float pers, float lacu) {
   return sum.xyz / sum.w;
 }
 
-vec3 corruptor(float t, float corrupt) {
-  const float PERS = 0.5;
-  const float LACU = 1.4;
-
-  float n = cyclic(vec3(t, corrupt, 0.0), PERS, LACU).x;
-  n = floor(n + corrupt);
-  return hash3f(vec3(t, 0.0, n));
-}
-
-float cheapfiltersaw(float phase, float k) {
-  float wave = fract(phase);
-  float c = smoothstep(1.0, 0.0, wave / (1.0 - k));
-  return (wave + c - 1.0) * 2.0 + k;
-}
-
-vec2 cheapnoise(float t) {
-  uvec3 s=uvec3(t * 256.0);
-  float p=fract(t * 256.0);
-
-  vec3 dice;
-  vec2 v = vec2(0.0);
-
-  dice=vec3(hash3u(s + 0u)) / float(-1u) - vec3(0.5, 0.5, 0.0);
-  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-  dice=vec3(hash3u(s + 1u)) / float(-1u) - vec3(0.5, 0.5, 1.0);
-  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-  dice=vec3(hash3u(s + 2u)) / float(-1u) - vec3(0.5, 0.5, 2.0);
-  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-
-  return 2.0 * v;
-}
-
 vec2 shotgun(float t, float spread, float snap, float fm) {
   vec2 sum = vec2(0.0);
 
@@ -203,19 +155,6 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
   }
 
   return sum / 64.0;
-}
-
-vec2 ladderLPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 4.0 * omega * (omegaSq - 1.0);
-  float b = 4.0 * reso + omegaSq * omegaSq - 6.0 * omegaSq + 1.0;
-
-  return vec2(
-    1.0 / sqrt(a * a + b * b),
-    atan(a, b)
-  );
 }
 
 vec2 mainAudioDry(vec4 time) {
@@ -376,7 +315,7 @@ vec2 mainAudioDry(vec4 time) {
       float l = S2T * floor(3.0 + 9.0 * dicetime.x);
       float t = tmod(tdelay + S2T * floor(9.0 * dicetime.y), l);
       float q = l - t;
-      float st = round((tdelay.w - t) / S2T);
+      float st = round((tdelay.z - t) / S2T);
 
       float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
       env *= exp2(-50.0 * t);

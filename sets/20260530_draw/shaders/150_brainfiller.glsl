@@ -11,9 +11,6 @@
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
-const float LN2 = log(2.0);
-const float P4 = pow(2.0, 5.0 / 12.0);
-const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob3; // kick cut
 uniform vec4 param_knob4; // riff cutoff
@@ -127,47 +124,6 @@ vec2 twoPoleHPF(float freq, float cutoff, float reso) {
     omegaSq / sqrt(a * a + b * b),
     atan(a, b)
   );
-}
-
-vec4 quant(float x, float ks, float kt, out float i) {
-  i = floor(floor(x / ks + 1E-4) * ks / kt + 1E-4);
-
-  float s = kt <= ks
-    ? ks * floor(x / ks + 1E-4)
-    : ks * ceil(i * kt / ks - 1E-4);
-  float l = kt <= ks
-    ? ks
-    : ks * ceil((i + 1.0) * kt / ks - 1E-4) - s;
-
-  float t = x - s;
-  float q = l - t;
-
-  return vec4(s, t, s + l, q);
-}
-
-vec4 quant(float x, float ks, float kt) {
-  float i;
-  return quant(x, ks, kt, i);
-}
-
-float swing(float x, float k) {
-  float xm = mod(x, 2.0);
-  return x + (1.0 - k) * linearstep(0.0, k, xm) * linearstep(2.0, k, xm);
-}
-
-float unswing(float x0, float x, float y, float k) {
-  return (
-    x0
-    - 2.0 * floor((x - y) / 2.0)
-    - k * linearstep(0.0, 1.0, mod(x - y, 2.0))
-    - (2.0 - k) * linearstep(1.0, 2.0, mod(x - y, 2.0))
-  );
-}
-
-float cheapFilterSaw( float phase, float k ) {
-  float i_wave = fract( phase );
-  float i_c = smoothstep( 1.0, 0.0, i_wave / k );
-  return ( i_wave + i_c ) * 2.0 - 1.0 - k;
 }
 
 vec2 mainAudioDry(vec4 time) {

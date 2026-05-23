@@ -16,8 +16,6 @@ const float SWING = 0.52;
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
-const float LN2 = log(2.0);
-
 
 uniform vec4 param_knob0; // hardsync backing vol
 uniform vec4 param_knob3; // kick cut

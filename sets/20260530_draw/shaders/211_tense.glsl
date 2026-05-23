@@ -13,9 +13,6 @@
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
-const float LN2 = log(2.0);
-const float P4 = pow(2.0, 5.0 / 12.0);
-const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob0; // choir volume
 uniform vec4 param_knob3; // kick cut
@@ -96,23 +93,6 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
   return sum / 64.0;
 }
 
-vec2 cheapnoise(float t) {
-  uvec3 s=uvec3(t * 256.0);
-  float p=fract(t * 256.0);
-
-  vec3 dice;
-  vec2 v = vec2(0.0);
-
-  dice=vec3(hash3u(s + 0u)) / float(-1u) - vec3(0.5, 0.5, 0.0);
-  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-  dice=vec3(hash3u(s + 1u)) / float(-1u) - vec3(0.5, 0.5, 1.0);
-  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-  dice=vec3(hash3u(s + 2u)) / float(-1u) - vec3(0.5, 0.5, 2.0);
-  v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-
-  return 2.0 * v;
-}
-
 vec4 seq16( int seq, float t, float tps ) {
   int sti = int( t / tps ) & 15;
   int rotated = ( ( seq >> ( 15 - sti ) ) | ( seq << ( sti + 1 ) ) ) & 0xffff;
@@ -151,26 +131,6 @@ vec4 quant(float x, float ks, float kt) {
   return quant(x, ks, kt, i);
 }
 
-float swing(float x, float k) {
-  float xm = mod(x, 2.0);
-  return x + (1.0 - k) * linearstep(0.0, k, xm) * linearstep(2.0, k, xm);
-}
-
-float unswing(float x0, float x, float y, float k) {
-  return (
-    x0
-    - 2.0 * floor((x - y) / 2.0)
-    - k * linearstep(0.0, 1.0, mod(x - y, 2.0))
-    - (2.0 - k) * linearstep(1.0, 2.0, mod(x - y, 2.0))
-  );
-}
-
-float cheapFilterSaw( float phase, float k ) {
-  float i_wave = fract( phase );
-  float i_c = smoothstep( 1.0, 0.0, i_wave / k );
-  return ( i_wave + i_c ) * 2.0 - 1.0 - k;
-}
-
 vec2 mainAudio(vec4 time) {
   vec2 dest = vec2(0);
   float sidechain;
@@ -195,49 +155,49 @@ vec2 mainAudio(vec4 time) {
     }
   }
 
-  { // bass
-    int notes[] = int[](
-      0, 10, 12, 0,
-      0, 0, 0, 0,
-      0, 10, 12, 0,
-      0, 0, 0, 0
-    );
+  // { // bass
+  //   int notes[] = int[](
+  //     0, 10, 12, 0,
+  //     0, 0, 0, 0,
+  //     0, 10, 12, 0,
+  //     0, 0, 0, 0
+  //   );
 
-    vec4 seq = seq16(0xffff, time.y, S2T);
-    float s = mod(round(seq.s), 16.0);
-    float t = seq.t;
-    float q = seq.q;
+  //   vec4 seq = seq16(0xffff, time.y, S2T);
+  //   float s = mod(round(seq.s), 16.0);
+  //   float t = seq.t;
+  //   float q = seq.q;
 
-    float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q) * exp(-20.0 * t);
+  //   float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q) * exp(-20.0 * t);
 
-    float pitch = 24.0 + TRANSPOSE + float(notes[int(s)]);
-    float freq = p2f(pitch);
+  //   float pitch = 24.0 + TRANSPOSE + float(notes[int(s)]);
+  //   float freq = p2f(pitch);
 
-    vec2 phase = vec2(t * freq);
-    phase += 0.1 * exp(-20.0 * t) * vec2(1.0, -1.0) * cos(2.0 * TAU * phase);
+  //   vec2 phase = vec2(t * freq);
+  //   phase += 0.1 * exp(-20.0 * t) * vec2(1.0, -1.0) * cos(2.0 * TAU * phase);
 
-    vec2 wave = vec2(sin(TAU * phase) - 0.2 * sin(3.0 * TAU * phase));
-    wave = tanh(3.0 * sin(3.0 * wave));
+  //   vec2 wave = vec2(sin(TAU * phase) - 0.2 * sin(3.0 * TAU * phase));
+  //   wave = tanh(3.0 * sin(3.0 * wave));
 
-    // sub bass
-    wave += tanh(sin(TAU * freq * t));
+  //   // sub bass
+  //   wave += tanh(sin(TAU * freq * t));
 
-    dest += 0.3 * env * sidechain * wave;
-  }
+  //   dest += 0.3 * env * sidechain * wave;
+  // }
 
-  { // hihat
-    vec4 seq = seq16(0x2222, time.y, S2T);
-    float t = seq.t;
-    float q = seq.q;
+  // { // hihat
+  //   vec4 seq = seq16(0x2222, time.y, S2T);
+  //   float t = seq.t;
+  //   float q = seq.q;
 
-    float env = mix(
-      exp(-70.0 * t),
-      exp(-4.0 * t),
-      0.01
-    );
-    vec2 wave = shotgun(6000.0 * t, 2.0, 0.0, 1.0);
-    dest += 0.2 * env * sidechain * tanh(8.0 * wave);
-  }
+  //   float env = mix(
+  //     exp(-70.0 * t),
+  //     exp(-4.0 * t),
+  //     0.01
+  //   );
+  //   vec2 wave = shotgun(6000.0 * t, 2.0, 0.0, 1.0);
+  //   dest += 0.2 * env * sidechain * tanh(8.0 * wave);
+  // }
 
   { // perc
     vec2 sum = vec2(0.0);
@@ -271,7 +231,7 @@ vec2 mainAudio(vec4 time) {
 
       float t = mod(time.z - 32.0 * B2T - 3.0 * fi * S2T, 64.0 * B2T);
       float env = smoothstep(0.0, 0.01, t) * exp(-10.0 * t);
-  
+
       vec2 phase = 40.0 * exp(-50.0 * mod(t, 0.02)) * exp(-4.0 * t) + 0.01 * sin(time.w + vec2(0.0, PI));
       vec2 wave = 2.0 * fract(phase) - 1.0;
 
@@ -304,23 +264,24 @@ vec2 mainAudio(vec4 time) {
       float t = min(seq1.t, seq2.t);
       float q = min(seq1.q, seq2.q);
       float seqi = mod(round(seqi1 + seqi2), 6.0);
-  
+
       float tt = max(t - 0.17 * B2T, 0.0);
       float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.01, q) * mix(
         exp(-70.0 * tt),
         exp(-4.0 * tt),
         0.01
       );
-  
+
       float pitch = 60.0 + TRANSPOSE + float(notes[int(seqi)]);
       float freq = p2f(pitch);
       float phase = t * freq;
-  
+
+      const float P5 = pow(2.0, 7.0 / 12.0);
       vec2 wave = (
         + cis(TAU * phase)
         + cis(P5 * TAU * phase)
       );
-      
+
       sum += env * delayDecay * wave * rotate2D(time.w);
     }
     dest += 0.07 * mix(0.4, 1.0, sidechain) * sum;

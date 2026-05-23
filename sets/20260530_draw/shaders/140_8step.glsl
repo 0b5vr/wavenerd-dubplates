@@ -16,9 +16,6 @@ const float SWING = 0.51;
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float LN2 = log(2.0);
-const float MIN3 = pow(2.0, 3.0 / 12.0);
-const float P4 = pow(2.0, 5.0 / 12.0);
-const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob2; // sweep
 uniform vec4 param_knob3; // kick cut
@@ -147,12 +144,6 @@ vec3 cyclic(vec3 p, float pers, float lacu) {
   }
 
   return sum.xyz / sum.w;
-}
-
-float cheapfiltersaw(float phase, float k) {
-  float wave = fract(phase);
-  float c = smoothstep(1.0, 0.0, wave / (1.0 - k));
-  return (wave + c - 1.0) * 2.0 + k;
 }
 
 vec2 cheapnoise(float t) {

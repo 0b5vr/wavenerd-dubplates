@@ -14,10 +14,8 @@
 
 const float SWING = 0.52;
 
-const float LN2 = log(2.0);
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
-const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob0; // pad level
 uniform vec4 param_knob3; // kick cut
@@ -133,19 +131,6 @@ vec2 cheapFilterSaw(vec2 phase, float k) {
   vec2 wave = fract(phase);
   vec2 c = smoothstep(1.0, 0.0, wave / (1.0 - k));
   return (wave + c - 1.0) * 2.0 + k;
-}
-
-vec2 ladderLPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 4.0 * omega * (omegaSq - 1.0);
-  float b = 4.0 * reso + omegaSq * omegaSq - 6.0 * omegaSq + 1.0;
-
-  return vec2(
-    1.0 / sqrt(a * a + b * b),
-    atan(a, b)
-  );
 }
 
 vec2 shotgun(float t, float spread, float snap, float fm) {

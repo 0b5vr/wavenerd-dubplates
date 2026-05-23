@@ -149,15 +149,6 @@ vec3 cyclic(vec3 p, float pers, float lacu) {
   return sum.xyz / sum.w;
 }
 
-vec3 corruptor(float t, float corrupt) {
-  const float PERS = 0.5;
-  const float LACU = 1.4;
-
-  float n = cyclic(vec3(t, corrupt, 0.0), PERS, LACU).x;
-  n = floor(n + corrupt);
-  return hash3f(vec3(t, 0.0, n));
-}
-
 float cheapfiltersaw(float phase, float k) {
   float wave = fract(phase);
   float c = smoothstep(1.0, 0.0, wave / (1.0 - k));

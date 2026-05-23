@@ -116,30 +116,6 @@ vec4 seq16(float t, int seq) {
   );
 }
 
-vec4 quant(float t, float interval, out float i) {
-  interval = max(interval, 1.0);
-  float st = t2sSwing(t);
-
-  i = floor(floor(st) / interval);
-
-  float prevStep = ceil(i * interval);
-  float prevTime = s2tSwing(prevStep);
-  float nextStep = ceil((i + 1.0) * interval);
-  float nextTime = s2tSwing(nextStep);
-
-  return vec4(
-    prevStep,
-    t - prevTime,
-    nextStep,
-    nextTime - t
-  );
-}
-
-vec4 quant(float t, float interval) {
-  float _;
-  return quant(t, interval, _);
-}
-
 mat3 orthBas(vec3 z) {
   z = normalize(z);
   vec3 x = normalize(cross(vec3(0, 1, 0), z));
@@ -175,12 +151,6 @@ vec3 cyclic(vec3 p, float pers, float lacu) {
   }
 
   return sum.xyz / sum.w;
-}
-
-float cheapfiltersaw(float phase, float k) {
-  float wave = fract(phase);
-  float c = smoothstep(1.0, 0.0, wave / (1.0 - k));
-  return (wave + c - 1.0) * 2.0 + k;
 }
 
 vec2 cheapnoise(float t) {

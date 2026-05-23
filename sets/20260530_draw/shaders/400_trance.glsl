@@ -16,7 +16,6 @@ const float SWING = 0.5;
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
-const float LN2 = log(2.0);
 
 uniform vec4 param_knob1; // sweep
 uniform vec4 param_knob2; // snare roll
@@ -95,30 +94,6 @@ vec4 seq16(float t, int seq) {
     nextStep,
     nextTime - t
   );
-}
-
-vec4 quant(float t, float interval, out float i) {
-  interval = max(interval, 1.0);
-  float st = t2sSwing(t);
-
-  i = floor(floor(st) / interval);
-
-  float prevStep = ceil(i * interval);
-  float prevTime = s2tSwing(prevStep);
-  float nextStep = ceil((i + 1.0) * interval);
-  float nextTime = s2tSwing(nextStep);
-
-  return vec4(
-    prevStep,
-    t - prevTime,
-    nextStep,
-    nextTime - t
-  );
-}
-
-vec4 quant(float t, float interval) {
-  float _;
-  return quant(t, interval, _);
 }
 
 mat3 orthBas(vec3 z) {

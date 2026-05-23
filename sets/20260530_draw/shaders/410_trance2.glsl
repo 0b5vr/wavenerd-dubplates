@@ -16,7 +16,6 @@ const float SWING = 0.5;
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
-const float LN2 = log(2.0);
 
 uniform vec4 param_knob2; // snare roll
 uniform vec4 param_knob3; // kick cut
@@ -99,50 +98,11 @@ vec4 seq16(float t, int seq) {
   );
 }
 
-vec4 quant(float t, float interval, out float i) {
-  interval = max(interval, 1.0);
-  float st = t2sSwing(t);
-
-  i = floor(floor(st) / interval);
-
-  float prevStep = ceil(i * interval);
-  float prevTime = s2tSwing(prevStep);
-  float nextStep = ceil((i + 1.0) * interval);
-  float nextTime = s2tSwing(nextStep);
-
-  return vec4(
-    prevStep,
-    t - prevTime,
-    nextStep,
-    nextTime - t
-  );
-}
-
-vec4 quant(float t, float interval) {
-  float _;
-  return quant(t, interval, _);
-}
-
 mat3 orthBas(vec3 z) {
   z = normalize(z);
   vec3 x = normalize(cross(vec3(0, 1, 0), z));
   vec3 y = cross(z, x);
   return mat3(x, y, z);
-}
-
-float glidephase(float t, float t1, float p0, float p1) {
-  if (p0 == p1) {
-    return t * p2f(p1);
-  }
-
-  float m0 = (p0 - 69.0) / 12.0;
-  float m1 = (p1 - 69.0) / 12.0;
-  float b = (m1 - m0) / t1;
-
-  return (
-    + p2f(p0) * (pow(2.0, b * min(t, t1)) - 1.0) / b / LN2
-    + max(0.0, t - t1) * p2f(p1)
-  );
 }
 
 vec3 cyclic(vec3 p, float pers, float lacu) {

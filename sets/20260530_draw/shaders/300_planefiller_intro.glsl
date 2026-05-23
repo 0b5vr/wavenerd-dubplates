@@ -13,10 +13,6 @@ const float SWING = 0.64;
 
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
-const float LN2 = log(2.0);
-const float MIN3 = pow(2.0, 3.0 / 12.0);
-const float P4 = pow(2.0, 5.0 / 12.0);
-const float P5 = pow(2.0, 7.0 / 12.0);
 
 // https://www.shadertoy.com/view/XlXcW4
 vec3 hash3f(vec3 s) {

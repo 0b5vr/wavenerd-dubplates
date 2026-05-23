@@ -116,30 +116,6 @@ vec4 seq16(float t, int seq) {
   );
 }
 
-vec4 quant(float t, float interval, out float i) {
-  interval = max(interval, 1.0);
-  float st = t2sSwing(t);
-
-  i = floor(floor(st) / interval);
-
-  float prevStep = ceil(i * interval);
-  float prevTime = s2tSwing(prevStep);
-  float nextStep = ceil((i + 1.0) * interval);
-  float nextTime = s2tSwing(nextStep);
-
-  return vec4(
-    prevStep,
-    t - prevTime,
-    nextStep,
-    nextTime - t
-  );
-}
-
-vec4 quant(float t, float interval) {
-  float _;
-  return quant(t, interval, _);
-}
-
 mat3 orthBas(vec3 z) {
   z = normalize(z);
   vec3 x = normalize(cross(vec3(0, 1, 0), z));
@@ -231,32 +207,6 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
   }
 
   return sum / 64.0;
-}
-
-vec2 ladderLPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 4.0 * omega * (omegaSq - 1.0);
-  float b = 4.0 * reso + omegaSq * omegaSq - 6.0 * omegaSq + 1.0;
-
-  return vec2(
-    1.0 / sqrt(a * a + b * b),
-    atan(a, b)
-  );
-}
-
-vec2 twoPoleHPF(float freq, float cutoff, float reso) {
-  float omega = freq / cutoff;
-  float omegaSq = omega * omega;
-
-  float a = 2.0 * (1.0 - reso) * omega;
-  float b = omegaSq - 1.0;
-
-  return vec2(
-    omegaSq / sqrt(a * a + b * b),
-    atan(a, b)
-  );
 }
 
 float getChordNote(int i, float t) {

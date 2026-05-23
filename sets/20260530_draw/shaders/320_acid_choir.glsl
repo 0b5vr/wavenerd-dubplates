@@ -8,10 +8,8 @@
 #define tri(x) (1.0 - 4.0 * abs(fract((x) + 0.25) - 0.5))
 #define repeat(i, n) for (int i = ZERO; i < n; i++)
 
-const float LN2 = log(2.0);
 const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
-const float P5 = pow(2.0, 7.0 / 12.0);
 
 uniform vec4 param_knob1; // sweep
 uniform vec4 param_knob3; // kick cut
@@ -60,18 +58,6 @@ float tmod(vec4 time, float d) {
 
 float p2f(float p) {
   return exp2((p - 69.0) / 12.0) * 440.0;
-}
-
-float cheapFilterSaw(float phase, float k) {
-  float wave = fract(phase);
-  float c = smoothstep(1.0, 0.0, wave / k);
-  return (wave + c) * 2.0 - 1.0 - k;
-}
-
-vec2 cheapFilterSaw(vec2 phase, float k) {
-  vec2 wave = fract(phase);
-  vec2 c = smoothstep(1.0, 0.0, wave / k);
-  return (wave + c) * 2.0 - 1.0 - k;
 }
 
 vec2 ladderLPF(float freq, float cutoff, float reso) {
@@ -477,6 +463,7 @@ vec2 mainAudioDry(vec4 time) {
   //     vec2 phase = t * freq + dice.x + vec2(0.0, 0.25);
   //     phase *= exp2(0.002 * dicen);
 
+  //     const float P5 = pow(2.0, 7.0 / 12.0);
   //     vec2 wave = (
   //       (fract(phase) * 2.0 - 1.0)
   //       - (fract(P5 * phase) * 2.0 - 1.0)
