@@ -224,14 +224,14 @@ vec2 mainAudioDry(vec4 time) {
     float q = seq.w;
 
     float env = mix(
-      exp2(-80.0 * t),
+      exp2(-60.0 * t),
       exp2(-500.0 * mod(t, 0.012)),
       exp2(-100.0 * max(0.0, t - 0.02))
     );
 
     vec2 wave = cyclic(vec3(4.0 * cis(800.0 * t), 840.0 * t), 0.5, 2.0).xy;
 
-    dest += 0.15 * tanh(20.0 * env * wave);
+    dest += 0.25 * tanh(20.0 * env * wave);
   }
 
   { // shaker
@@ -434,6 +434,5 @@ vec2 mainAudioDry(vec4 time) {
 
 vec2 mainAudio(vec4 time) {
   vec2 dest = mainAudioDry(time);
-  dest *= 1.1;
   return dest;
 }
