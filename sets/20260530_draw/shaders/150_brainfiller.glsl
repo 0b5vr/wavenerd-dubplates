@@ -128,28 +128,27 @@ vec2 twoPoleHPF(float freq, float cutoff, float reso) {
 
 vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
-  float sidechain;
+  float sidechain = 1.0;
 
+  // { // kick
+  //   float t = time.x;
+  //   float q = B2T - t;
+  //   sidechain = 0.2 + 0.8 * smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
 
-  { // kick
-    float t = time.x;
-    float q = B2T - t;
-    sidechain = 0.2 + 0.8 * smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
+  //   float env = smoothstep(0.0, 0.001, q) * smoothstep(2.0 * B2T, 0.1 * B2T, t);
+  //   env *= mix(1.0, exp(-70.0 * t), p3);
 
-    float env = smoothstep(0.0, 0.001, q) * smoothstep(2.0 * B2T, 0.1 * B2T, t);
-    env *= mix(1.0, exp(-70.0 * t), p3);
-
-    {
-      float wave = sin(
-        270.0 * t
-        - 40.0 * exp(-t * 20.0)
-        - 20.0 * exp(-t * 60.0)
-        - 10.0 * exp(-t * 300.0)
-        - 0.4 * sin(120.0 * t)
-      );
-      dest += 0.6 * tanh(2.0 * env * wave);
-    }
-  }
+  //   {
+  //     float wave = sin(
+  //       270.0 * t
+  //       - 40.0 * exp(-t * 20.0)
+  //       - 20.0 * exp(-t * 60.0)
+  //       - 10.0 * exp(-t * 300.0)
+  //       - 0.4 * sin(120.0 * t)
+  //     );
+  //     dest += 0.6 * tanh(2.0 * env * wave);
+  //   }
+  // }
 
   // { // hihat
   //   float t = mod(time.x, S2T);
@@ -244,13 +243,13 @@ vec2 mainAudioDry(vec4 time) {
     dest += 0.12 * env * wave;
   }
 
-  { // crash
-    float t = mod(time.z, 64.0 * B2T);
+  // { // crash
+  //   float t = mod(time.z, 64.0 * B2T);
 
-    float env = mix(exp(-t), exp(-10.0 * t), 0.7);
-    vec2 wave = shotgun(3800.0 * t, 2.0);
-    dest += 0.3 * env * sidechain * tanh(8.0 * wave);
-  }
+  //   float env = mix(exp(-t), exp(-10.0 * t), 0.7);
+  //   vec2 wave = shotgun(3800.0 * t, 2.0);
+  //   dest += 0.3 * env * sidechain * tanh(8.0 * wave);
+  // }
 
   { // additive riff
     vec2 sum = vec2(0.0);
