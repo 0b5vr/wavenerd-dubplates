@@ -124,7 +124,7 @@ vec2 shotgun(float t, float spread, float snap, float fm) {
 vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0.0);
 
-  float duck = 1.0;
+  float duck = smoothstep(0.0, 0.4, time.x) * smoothstep(0.0, 0.001, B2T - time.x);
 
   { // kick
     vec4 seq = seq16(time.y, 0x8888);
