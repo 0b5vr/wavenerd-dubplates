@@ -12,7 +12,7 @@
 
 // - compile takes a time for this one
 // - open oidos drone using knob 7
-// - open fm riff using knob 4
+// - open fm riff using knob 0
 // - introduce kick and bass
 // - don't forget crash cymbal and sub riff
 // - ride and clap are loud
@@ -39,11 +39,13 @@ const float LN2 = log(2.0);
 
 uniform vec4 param_knob0; // riff amp
 uniform vec4 param_knob3; // kick cut
-uniform vec4 param_knob5; // riff fm ratio
+uniform vec4 param_knob4; // riff fm ratio
+uniform vec4 param_knob5; // riff lofi
 uniform vec4 param_knob7; // oidos filter
 
 #define p0 paramFetch(param_knob0)
 #define p3 paramFetch(param_knob3)
+#define p4 paramFetch(param_knob4)
 #define p5 paramFetch(param_knob5)
 #define p7 paramFetch(param_knob7)
 
@@ -429,14 +431,14 @@ vec2 mainAudioDry(vec4 time) {
       float lofiamp0 = step(0.5, dice0.x);
       float lofiamp1 = step(0.5, dice1.x);
       float lofiamp = mix(lofiamp0, lofiamp1, saturate(t / GLIDE));
-      phase = mix(phase, lofi(phase, 1.0 / 64.0), lofiamp);
+      phase = mix(phase, lofi(phase, exp2(-6.0 + 4.0 * p5)), lofiamp);
 
       // fm
       float fmamp0 = smoothstep(0.5, 1.0, dice0.y);
       float fmamp1 = smoothstep(0.5, 1.0, dice1.y);
       float fmamp = mix(fmamp0, fmamp1, saturate(t / GLIDE));
       // phase += fmamp * sin(2.5 * TAU * phase);
-      phase += fmamp * sin(mix(1.25, 3.5, p5) * TAU * phase);
+      phase += fmamp * sin(mix(1.25, 3.5, p4) * TAU * phase);
 
       vec2 wave = vec2(sin(TAU * phase));
 
