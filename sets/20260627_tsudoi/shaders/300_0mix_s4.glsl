@@ -115,7 +115,7 @@ vec2 cheapnoise(float t){
 vec2 mainAudioDry(vec4 time){
   vec2 dest=vec2(0);
 
-  float sidechain=1.;
+  float sidechain=smoothstep(0.,1E-3,b2t-time.x)*smoothstep(0.,.8*b2t,time.x);
 
   float trans=mod(time.z,16.*b2t)<(12.*b2t)?-6.:-8.;
 
@@ -159,32 +159,32 @@ vec2 mainAudioDry(vec4 time){
     dest+=.5*zc*sidechain*tanh(1.5*sum);
   }
 
-  { // hihat
-    float t=mod(time.x,.25*b2t);
-    float st=floor(time.y/.25/b2t);
+  // { // hihat
+  //   float t=mod(time.x,.25*b2t);
+  //   float st=floor(time.y/.25/b2t);
 
-    float vel=fract(st*.62+.67);
-    float env=exp(-exp2(7.-3.*vel)*t);
-    vec2 wave=shotgun(4000.*t,2.,.0);
-    dest+=.25*env*sidechain*tanh(8.*wave);
-  }
+  //   float vel=fract(st*.62+.67);
+  //   float env=exp(-exp2(7.-3.*vel)*t);
+  //   vec2 wave=shotgun(4000.*t,2.,.0);
+  //   dest+=.25*env*sidechain*tanh(8.*wave);
+  // }
 
-  { // rim
-    float t=mod(time.y,.25*b2t);
-    float st=floor(time.z/.25/b2t);
+  // { // rim
+  //   float t=mod(time.y,.25*b2t);
+  //   float st=floor(time.z/.25/b2t);
 
-    float env=exp(-300.*t);
-    dest+=.2*step(.5,fract(st*.71+.4))*env*tanh(4.*(
-      +tri(t*400.-.5*env)
-      +tri(t*1500.-.5*env)
-    ))*vec2(1,-1);
-  }
+  //   float env=exp(-300.*t);
+  //   dest+=.2*step(.5,fract(st*.71+.4))*env*tanh(4.*(
+  //     +tri(t*400.-.5*env)
+  //     +tri(t*1500.-.5*env)
+  //   ))*vec2(1,-1);
+  // }
 
-  { // perc
-    float t=mod(time.y-1.*b2t,2.*b2t);
+  // { // perc
+  //   float t=mod(time.y-1.*b2t,2.*b2t);
 
-    dest+=.2*tanh(5.*shotgun(1100.*t,1.5,.4))*exp(-4.*t);
-  }
+  //   dest+=.2*tanh(5.*shotgun(1100.*t,1.5,.4))*exp(-4.*t);
+  // }
 
   { // crash
     float t=time.z;
