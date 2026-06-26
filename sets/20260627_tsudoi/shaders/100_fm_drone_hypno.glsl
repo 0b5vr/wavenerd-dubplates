@@ -29,8 +29,10 @@ const float PI = acos(-1.0);
 const float TAU = PI * 2.0;
 const float LN2 = log(2.0);
 
+uniform vec4 param_knob0; // delay stuff
 uniform vec4 param_knob3; // kick cut
 
+#define MACRO0 paramFetch(param_knob0)
 #define MACRO3 paramFetch(param_knob3)
 
 uvec3 hash3u(uvec3 v) {
@@ -281,7 +283,7 @@ vec2 mainAudioDry(vec4 time) {
   //   dest += 0.05 * mix(0.3, 1.0, duck) * env * sin(4.0 * wave);
   // }
 
-  { // delay riff zone
+  { // delay stuff
     vec2 sum = vec2(0.0);
     repeat(iDelay, 6) {
       float fiDelay = float(iDelay);
@@ -396,7 +398,7 @@ vec2 mainAudioDry(vec4 time) {
       sum += delaydecay * sumd;
     }
 
-    dest += 0.0 * mix(0.5, 1.0, duck) * sum;
+    dest += MACRO0 * MACRO0 * mix(0.5, 1.0, duck) * sum;
   }
 
   { // fm drone
