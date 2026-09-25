@@ -1,41 +1,30 @@
 #define S2T (15.0 / bpm)
-#define B2T (60./bpm)
-#define T2B (1./B2T)
+#define B2T (60.0 / bpm)
 #define ZERO min(0, int(bpm))
 
-#define saturate(i) clamp(i, 0.,1.)
-#define clip(i) clamp(i, -1.,1.)
+#define saturate(i) clamp(i, 0.0, 1.0)
+#define clip(i) clamp(i, -1.0, 1.0)
 #define linearstep(a,b,x) saturate(((x)-(a))/((b)-(a)))
 #define lofi(i,m) (floor((i)/(m))*(m))
 #define lofir(i,m) (floor((i)/(m)+0.5)*(m))
 #define saw(p) (2.*fract(p)-1.)
 #define pwm(x,d) (step(fract(x),(d))*2.0-1.0)
 #define tri(p) (1.-4.*abs(fract(p)-0.5))
-#define p2f(i) (pow(2.,((i)-69.)/12.)*440.)
-#define inrange(x,a,b) ((a)<=(x)&&(x)<(b))
+#define u2b(u) ((u) * 2.0 - 1.0)
+#define b2u(b) ((b) * 0.5 + 0.5)
 #define repeat(i, n) for(int i = ZERO; i < n; i ++)
 
-const float TRANSPOSE=3.;
+uniform vec4 param_knob3; // kick cut
+
+#define MACRO3 paramFetch(param_knob3)
+
+const float TRANSPOSE = 3.0;
 const float SWING = 0.58;
 
-const float PI=acos(-1.);
-const float TAU=2.*PI;
-const float P4=pow(2.,5./12.);
-const float P5=pow(2.,7./12.);
+const float PI = acos(-1.0);
+const float TAU = 2.0 * PI;
 
-float zcross( float t, float l, float d ) {
-  return linearstep( 0.0, d, t ) * linearstep( 0.0, d, l - t );
-}
-
-float envA( float t, float a ) {
-  return linearstep( 0.0, a, t );
-}
-
-float envAR( float t, float l, float a, float r ) {
-  return envA( t, a ) * linearstep( l, l - r, t );
-}
-
-uvec3 pcg3d( uvec3 v ) {
+uvec3 hash3u(uvec3 v) {
   v = v * 1145141919u + 1919810u;
   v.x += v.y * v.z;
   v.y += v.z * v.x;
@@ -47,39 +36,52 @@ uvec3 pcg3d( uvec3 v ) {
   return v;
 }
 
-vec3 pcg3df( vec3 v ) {
-  uvec3 r = pcg3d( floatBitsToUint( v ) );
-  return vec3( r ) / float( 0xffffffffu );
+vec3 hash3f(vec3 v) {
+  uvec3 x = floatBitsToUint(v);
+  return vec3(hash3u(x)) / float(-1u);
 }
 
-mat2 r2d(float x){
-  float c=cos(x),s=sin(x);
-  return mat2(c,s,-s,c);
+vec2 cis(float t) {
+  return vec2(cos(t), sin(t));
 }
 
-vec2 orbit(float t){
-  return vec2(cos(TAU*t),sin(TAU*t));
+mat2 rotate2D(float x) {
+  vec2 v = cis(x);
+  return mat2(v.x, v.y, -v.y, v.x);
+}
+
+vec2 boxMuller(vec2 xi) {
+  float r = sqrt(-2.0 * log(xi.x));
+  float t = xi.y;
+  return r * cis(TAU * t);
+}
+
+float tmod(vec4 time, float d) {
+  vec4 t = mod(time, timeLength);
+  float offset = lofi(t.z - t.x + timeLength.x / 2.0, timeLength.x);
+  offset -= lofi(t.z, d);
+  return t.x + offset;
 }
 
 float t2sSwing(float t) {
-  float st = t / S2T;
+  float st = 4.0 * t / B2T;
   return 2.0 * floor(st / 2.0) + step(SWING, fract(0.5 * st));
 }
 
 float s2tSwing(float st) {
-  return 2.0 * S2T * (floor(st / 2.0) + SWING * mod(st, 2.0));
+  return 0.5 * B2T * (floor(st / 2.0) + SWING * mod(st, 2.0));
 }
 
 vec4 seq16(float t, int seq) {
-  t = mod(t, 16.0 * S2T);
+  t = mod(t, 4.0 * B2T);
   int sti = clamp(int(t2sSwing(t)), 0, 15);
   int rotated = ((seq >> (15 - sti)) | (seq << (sti + 1))) & 0xffff;
 
-  float prevStepBehind = log2(float(rotated & -rotated));
-  float prevStep = float(sti) - prevStepBehind;
+  float i_prevStepBehind = log2(float(rotated & -rotated));
+  float prevStep = float(sti) - i_prevStepBehind;
   float prevTime = s2tSwing(prevStep);
-  float nextStepForward = 16.0 - floor(log2(float(rotated)));
-  float nextStep = float(sti) + nextStepForward;
+  float i_nextStepForward = 16.0 - floor(log2(float(rotated)));
+  float nextStep = float(sti) + i_nextStepForward;
   float nextTime = s2tSwing(nextStep);
 
   return vec4(
@@ -90,41 +92,57 @@ vec4 seq16(float t, int seq) {
   );
 }
 
-vec4 quant(float t, float interval, out float i) {
-  interval = max(interval, 1.0);
-  float st = t2sSwing(t);
-
-  i = floor(floor(st + 1E-4) / interval + 1E-4);
-
-  float prevStep = ceil(i * interval - 1E-4);
-  float prevTime = s2tSwing(prevStep);
-  float nextStep = ceil((i + 1.0) * interval - 1E-4);
-  float nextTime = s2tSwing(nextStep);
-
-  return vec4(
-    prevStep,
-    t - prevTime,
-    nextStep,
-    nextTime - t
-  );
+float p2f(float p) {
+  return exp2((p - 69.0) / 12.0) * 440.0;
 }
 
-vec4 quant(float t, float interval) {
-  float _;
-  return quant(t, interval, _);
+float cheapFilterSaw(float phase, float k) {
+  float wave = fract(phase);
+  float c = smoothstep(1.0, 0.0, wave / (1.0 - k));
+  return (wave + c - 1.0) * 2.0 + k;
 }
 
-vec2 shotgun(float t,float spread,float snap){
-  vec2 sum=vec2(0);
-  for(int i=0;i<64;i++){
-    vec3 dice=pcg3df(vec3(i));
+vec2 cheapFilterSaw(vec2 phase, float k) {
+  vec2 wave = fract(phase);
+  vec2 c = smoothstep(1.0, 0.0, wave / (1.0 - k));
+  return (wave + c - 1.0) * 2.0 + k;
+}
 
-    float partial=exp2(spread*dice.x);
-    partial=mix(partial,floor(partial+.5),snap);
+vec2 shotgun(float t, float spread, float snap, float fm) {
+  vec2 sum = vec2(0.0);
 
-    sum+=vec2(sin(TAU*t*partial))*r2d(TAU*dice.y);
+  repeat(i, 64) {
+    vec3 dice = hash3f(vec3(i + 1));
+
+    vec2 partial = exp2(spread * dice.xy);
+    partial = mix(partial, floor(partial + 0.5), snap);
+
+    sum += sin(TAU * t * partial + fm * sin(TAU * t * partial));
   }
-  return sum/64.;
+
+  return sum / 64.0;
+}
+
+mat3 orthBas(vec3 z) {
+  z = normalize(z);
+  vec3 x = normalize(cross(vec3(0, 1, 0), z));
+  vec3 y = cross(z, x);
+  return mat3(x, y, z);
+}
+
+vec3 cyclic(vec3 p, float pers, float lacu) {
+  vec4 sum = vec4(0);
+  mat3 rot = orthBas(vec3(2, -3, 1));
+
+  repeat(i, 5) {
+    p *= rot;
+    p += sin(p.zxy);
+    sum += vec4(cross(cos(p), sin(p.yzx)), 1);
+    sum /= pers;
+    p *= lacu;
+  }
+
+  return sum.xyz / sum.w;
 }
 
 vec2 cheapnoise(float t) {
@@ -134,124 +152,158 @@ vec2 cheapnoise(float t) {
   vec3 dice;
   vec2 v = vec2(0.0);
 
-  dice=vec3(pcg3d(s + 0u)) / float(-1u) - vec3(0.5, 0.5, 0.0);
+  dice=vec3(hash3u(s + 0u)) / float(-1u) - vec3(0.5, 0.5, 0.0);
   v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-  dice=vec3(pcg3d(s + 1u)) / float(-1u) - vec3(0.5, 0.5, 1.0);
+  dice=vec3(hash3u(s + 1u)) / float(-1u) - vec3(0.5, 0.5, 1.0);
   v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
-  dice=vec3(pcg3d(s + 2u)) / float(-1u) - vec3(0.5, 0.5, 2.0);
+  dice=vec3(hash3u(s + 2u)) / float(-1u) - vec3(0.5, 0.5, 2.0);
   v += dice.xy * smoothstep(1.0, 0.0, abs(p + dice.z));
 
   return 2.0 * v;
 }
 
-vec2 cheapnoiseFBM(float t, float pers, float lacu) {
-  vec3 sum = vec3(0);
-
-  repeat(i, 5) {
-    sum += vec3(cheapnoise(t), 1);
-    sum /= pers;
-    t *= lacu;
-  }
-
-  return sum.xy / sum.z;
-}
-
-float cheapfiltersaw(float phase,float k){
-  float wave=mod(phase,1.);
-  float c=.5+.5*cos(PI*saturate(wave/k));
-  return (wave+c)*2.-1.-k;
-}
-
-vec2 boxMuller(vec2 xi){
-  float r=sqrt(-2.*log(xi.x));
-  float t=xi.y;
-  return r*orbit(t);
-}
-
-vec2 mainAudio( vec4 time ) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
 
-  float kickt;
-  float sidechain;
+  float duck = 1.0 - smoothstep(0.0, 0.001, time.x) * smoothstep(0.8 * B2T, 0.0, time.x);
 
   { // kick
-    float t = kickt=time.x;
-    sidechain=smoothstep(0.,.8*B2T,t);
+    float t = time.x;
+    float q = B2T - t;
+    duck = 1.0 - smoothstep(0.0, 0.001, t) * smoothstep(0.8 * B2T, 0.0, t);
 
     {
-      float env=linearstep(0.3,0.1,t);
+      float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
+      env *= mix(
+        exp2(-2.0 * t),
+        exp2(-20.0 * t),
+        0.1
+      );
 
-      // { // hi pass like
-      //   env*=exp(-50.*t);
-      // }
+      env *= mix(1.0, exp2(-40.0 * t), MACRO3);
 
-      dest+=.5*env*tanh(3.*sin(
-        310.*t-20.*exp(-28.*t)
-        -20.*exp(-500.*t)
+      float osc = tanh(3.0 * sin(
+        310.0 * t - 20.0 * exp2(-40.0 * t)
+        -20.0 * exp2(-800.0 * t)
       ));
+
+      dest += 0.5 * env * osc;
     }
-  }
-
-  { // bass
-    float t=time.x;
-    vec2 uv=orbit(8.*t)+t*1.3;
-
-    vec2 wave = (
-      + sin(320.0 * t)
-      + 0.2 * cheapnoiseFBM(4.0 * t, 0.3, 2.0)
-    );
-    dest+=.4*sidechain*wave;
   }
 
   { // hihat
     vec4 seq = seq16(time.y, 0xffff);
-    float t=seq.t;
-    float st=floor(time.y*4.*T2B);
-    float decay=exp2(7.-3.*fract(.628*st));
-    dest+=.2*tanh(8.*shotgun(5400.*t,1.4,.0))*exp(-decay*t);
+    float st = seq.s;
+    float t = seq.t;
+    float q = seq.q;
+
+    float env = smoothstep(0.0, 0.001, q);
+    float decay = exp2(6.0 - fract(0.628 * st) - 2.0 * float(mod(st, 4.0) == 2.0));
+    env *= exp(-decay * t);
+
+    vec2 sum = vec2(0);
+    for (int i = 0; i < 8; i++) {
+      float fi = float(i);
+      float tt = t + 0.002 * (fi + 5.0 * sin(TAU * time.z / 32.0 / B2T + 0.2 * fi));
+      sum += tanh(8.0 * shotgun(5400.0 * tt, 1.4, 0.0, 1.0));
+    }
+
+    dest += 0.14 * env * tanh(sum / 4.0);
   }
 
   { // clap
     vec4 seq = seq16(time.y, 0x0808);
-    float t=seq.t;
-    t=lofi(t,1E-4);
+    float t = seq.y;
+    float q = seq.w;
 
-    float env=mix(
-      exp(-30.*t),
-      exp(-200.*mod(t,.013)),
-      exp(-80.*max(0.,t-.02))
+    float env = mix(
+      exp2(-60.0 * t),
+      exp2(-500.0 * mod(t, 0.012)),
+      exp2(-100.0 * max(0.0, t - 0.02))
     );
 
-    vec2 uv=orbit(87.*t)+20.*t;
+    vec2 wave = cyclic(vec3(4.0 * cis(1100.0 * t), 1240.0 * t), 0.5, 2.0).xy;
 
-    dest+=.18*tanh(20.*env*cheapnoiseFBM(8.0 * t, 0.5, 2.0));
+    dest += 0.12 * tanh(20.0 * env * wave);
+  }
+
+  { // jet
+    vec4 seq = seq16(time.y, 0xffff);
+    float st = seq.s;
+    float t = seq.y;
+    float q = seq.w;
+
+    float decay = exp2(5.0 + 2.0 * fract(0.418 * st + 0.3));
+    float env = exp2(-decay * t);
+
+    float mul = exp2(2.0 * fract(0.429 * st));
+
+    vec2 sum = vec2(0);
+    for (int i = 0; i < 3; i++) {
+      float fi = float(i);
+      float tt = t + exp2(-11.0 + sin(TAU * time.z / 3.0 / B2T)) * fi;
+      sum += cyclic(vec3(4.0 * cis(mul * 1080.0 * tt), mul * 1220.0 * tt), 1.0, 2.0).xy;
+    }
+
+    dest += 0.03 * tanh(10.0 * env * sum);
+  }
+
+  { // rim
+    vec4 seq = seq16(time.y, 0x7d6f);
+    float t = seq.y;
+
+    float env = step(0.0, t) * exp2(-400.0 * t);
+
+    float wave = tanh(4.0 * (
+      + tri(t * 400.0 - 0.5 * env)
+      + tri(t * 1500.0 - 0.5 * env)
+    ));
+
+    dest += 0.2 * mix(0.8, 1.0, duck) * env * vec2(wave) * rotate2D(seq.x);
   }
 
   { // ride
     vec4 seq = seq16(time.y, 0xaaaa);
-    float t=seq.t;
+    float t = seq.t;
 
-    float env=mix(
-      exp(-5.*t),
-      exp(-50.*t),
-      .2
+    float env = mix(
+      exp2(-5.0 * t),
+      exp2(-50.0 * t),
+      0.2
     );
-    dest+=.1*mix(.3,1.,sidechain)*tanh(10.*shotgun(3000.*t,3.4,.3))*env;
+
+    vec2 sum = vec2(0);
+    for (int i = 0; i < 4; i++) {
+      float fi = float(i);
+      sum += shotgun(1000.0 * t + fi * (4.0 + 8.0 * t), 4.4, 0.3, 0.0);
+    }
+    
+    dest += 0.07 * mix(0.3, 1.0, duck) * env * tanh(10.0 * sum);
   }
 
   { // crash
-    float t=time.z;
-    dest+=.2*mix(.2,1.,sidechain)*tanh(8.*shotgun(4000.*t,3.,.0))*mix(exp(-t),exp(-10.*t),.5);
+    float t = time.z;
+
+    float env = mix(
+      exp2(-t),
+      exp2(-16.0 * t),
+      0.5
+    );
+
+    vec2 osc = tanh(8.0 * shotgun(4000.0 * t, 3.0, 0.0, 0.0));
+    
+    dest += 0.2 * mix(0.2, 1.0, duck) * env * osc;
   }
 
   { // ep
-    vec2 sum=vec2(0);
+    const float CHORD[7] = float[](0.0, 2.0, 3.0, 7.0, 9.0, 10.0, 14.0);
 
-    for(int i=0;i<28;i++){
-      float delay=float(i/7);
+    vec2 sum = vec2(0);
 
-      float chord[7]=float[](0.,2.,3.,7.,9.,10.,14.);
-      float note=chord[i%7];
+    for (int i = 0; i < 28; i++) {
+      float delay = float(i / 7);
+
+      float note = CHORD[i % 7];
 
       float t = mod(time.z, 64.0 * S2T);
       float st = mod(t2sSwing(t) - 1.0, 64.0);
@@ -267,29 +319,38 @@ vec2 mainAudio( vec4 time ) {
       st = mod(st, 64.0);
 
       t = mod(t - s2tSwing(st), 64.0 * S2T);
-      float q = (1.4 * S2T) - t;
+      float q = (3.0 * S2T) - t;
+      float qd = (1.4 * S2T) - t;
 
-      vec3 dice=pcg3df(vec3(i, st, 0));
-      vec2 dicen=boxMuller(dice.xy);
+      vec3 dice = hash3f(vec3(i, st, 0));
+      vec2 dicen = boxMuller(dice.xy);
 
-      float env = exp(-50.0 * max(-q, 0.0));
+      float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
+      env *= exp(-50.0 * max(-qd, 0.0));
 
-      float freq=p2f(48.+prog+TRANSPOSE+note+.02*dicen.y);
-      float phase=lofi(freq*t+TAU*dice.z,1./32.);
-      vec2 wave=vec2(
-        +.25*sin(TAU*phase)
-        +.25*sin(2.*TAU*phase)
-        +.14*sin(3.*TAU*phase)
-        +.10*sin(4.*TAU*phase)
-      )*vec2(1,-1);
+      float freq = p2f(48.0 + prog + TRANSPOSE + note + 0.02 * dicen.y);
+      float phase = lofi(freq * t + TAU * dice.z, 1.0 / 32.0);
+      vec2 osc = vec2(
+        + 0.25 * sin(TAU * phase)
+        + 0.25 * sin(2.0 * TAU * phase)
+        + 0.14 * sin(3.0 * TAU * phase)
+        + 0.10 * sin(4.0 * TAU * phase)
+      );
 
-      float zc=linearstep(0.,1E-3,t)*linearstep(0.,1E-3,.75*B2T-t);
-
-      sum+=zc*env*exp(-2.*delay)*wave*r2d(-3.*delay+0.3*dicen.x);
+      float delaydecay = exp(-2.0 * delay);
+      sum += env * delaydecay * osc * rotate2D(-3.0 * delay + 0.3 * dicen.x);
     }
 
     dest += 0.2 * sum;
   }
 
-  return tanh(1.5*dest);
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = vec2(0);
+
+  dest = mainAudioDry(time);
+
+  return clip(1.3 * tanh(dest));
 }
