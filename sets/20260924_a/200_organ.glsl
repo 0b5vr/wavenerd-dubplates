@@ -14,11 +14,9 @@
 #define b2u(b) ((b) * 0.5 + 0.5)
 #define repeat(i, n) for(int i = ZERO; i < n; i ++)
 
-uniform vec4 param_knob0; // stab level
 uniform vec4 param_knob1; // sweep level
 uniform vec4 param_knob3; // kick cut
 
-#define MACRO0 paramFetch(param_knob0)
 #define MACRO1 paramFetch(param_knob1)
 #define MACRO3 paramFetch(param_knob3)
 
@@ -500,7 +498,7 @@ vec2 mainAudioDry(vec4 time) {
         sum += env * tanh(1.0 * osc) * rotate2D(fi);
       }
   
-      dest += MACRO0 * 0.06 * mix(0.4, 1.0, duck) * sum;
+      dest += 0.06 * mix(0.4, 1.0, duck) * sum;
     }
   }
 
