@@ -356,5 +356,6 @@ vec2 mainAudioDry(vec4 time) {
 
 vec2 mainAudio(vec4 time) {
   vec2 dest = mainAudioDry(time);
+  dest *= 0.9;
   return dest;
 }

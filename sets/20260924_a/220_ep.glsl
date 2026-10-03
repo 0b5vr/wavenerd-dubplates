@@ -180,23 +180,21 @@ vec2 mainAudioDry(vec4 time) {
   //   float q = seq.q;
   //   duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
 
-  //   {
-  //     float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
-  //     env *= mix(
-  //       exp2(-2.0 * t),
-  //       exp2(-20.0 * t),
-  //       0.1
-  //     );
+  //   float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
+  //   env *= mix(
+  //     exp2(-2.0 * t),
+  //     exp2(-20.0 * t),
+  //     0.1
+  //   );
 
-  //     env *= mix(1.0, exp2(-40.0 * t), MACRO3);
+  //   env *= mix(1.0, exp2(-40.0 * t), MACRO3);
 
-  //     float osc = tanh(3.0 * sin(
-  //       310.0 * t - 20.0 * exp2(-40.0 * t)
-  //       -20.0 * exp2(-800.0 * t)
-  //     ));
+  //   float osc = tanh(3.0 * sin(
+  //     310.0 * t - 20.0 * exp2(-40.0 * t)
+  //     -20.0 * exp2(-800.0 * t)
+  //   ));
 
-  //     dest += 0.5 * env * osc;
-  //   }
+  //   dest += 0.5 * env * osc;
   // }
 
   // { // hihat
@@ -210,7 +208,7 @@ vec2 mainAudioDry(vec4 time) {
   //   env *= exp(-decay * t);
 
   //   vec2 sum = vec2(0);
-  //   for (int i = 0; i < 8; i++) {
+  //   repeat(i, 8) {
   //     float fi = float(i);
   //     float tt = t + 0.002 * (fi + 5.0 * sin(TAU * time.z / 32.0 / B2T + 0.2 * fi));
   //     sum += tanh(8.0 * shotgun(5400.0 * tt, 1.4, 0.0, 1.0));
@@ -247,7 +245,7 @@ vec2 mainAudioDry(vec4 time) {
   //   float mul = exp2(2.0 * fract(0.429 * st));
 
   //   vec2 sum = vec2(0);
-  //   for (int i = 0; i < 3; i++) {
+  //   repeat(i, 3) {
   //     float fi = float(i);
   //     float tt = t + exp2(-11.0 + sin(TAU * time.z / 3.0 / B2T)) * fi;
   //     sum += cyclic(vec3(4.0 * cis(mul * 1080.0 * tt), mul * 1220.0 * tt), 1.0, 2.0).xy;
@@ -281,7 +279,7 @@ vec2 mainAudioDry(vec4 time) {
   //   );
 
   //   vec2 sum = vec2(0);
-  //   for (int i = 0; i < 4; i++) {
+  //   repeat(i, 4) {
   //     float fi = float(i);
   //     sum += shotgun(1000.0 * t + fi * (4.0 + 8.0 * t), 4.4, 0.3, 0.0);
   //   }
@@ -308,7 +306,7 @@ vec2 mainAudioDry(vec4 time) {
 
     vec2 sum = vec2(0);
 
-    for (int i = 0; i < 28; i++) {
+    repeat(i, 28) {
       float delay = float(i / 7);
 
       float note = CHORD[i % 7];
@@ -359,6 +357,7 @@ vec2 mainAudio(vec4 time) {
   vec2 dest = vec2(0);
 
   dest = mainAudioDry(time);
+  dest *= 0.98;
 
-  return clip(1.3 * tanh(dest));
+  return dest;
 }

@@ -128,26 +128,30 @@ vec2 twoPoleHPF(float freq, float cutoff, float reso) {
 
 vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
-  float sidechain = 1.0;
+  float duck = 1.0;
+
+  { // duck
+    float t = time.x;
+    float q = B2T - t;
+    duck = 0.2 + 0.8 * smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
+  }
 
   // { // kick
   //   float t = time.x;
   //   float q = B2T - t;
-  //   sidechain = 0.2 + 0.8 * smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
+  //   duck = 0.2 + 0.8 * smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q);
 
   //   float env = smoothstep(0.0, 0.001, q) * smoothstep(2.0 * B2T, 0.1 * B2T, t);
   //   env *= mix(1.0, exp(-70.0 * t), p3);
 
-  //   {
-  //     float wave = sin(
-  //       270.0 * t
-  //       - 40.0 * exp(-t * 20.0)
-  //       - 20.0 * exp(-t * 60.0)
-  //       - 10.0 * exp(-t * 300.0)
-  //       - 0.4 * sin(120.0 * t)
-  //     );
-  //     dest += 0.6 * tanh(2.0 * env * wave);
-  //   }
+  //   float wave = sin(
+  //     270.0 * t
+  //     - 40.0 * exp(-t * 20.0)
+  //     - 20.0 * exp(-t * 60.0)
+  //     - 10.0 * exp(-t * 300.0)
+  //     - 0.4 * sin(120.0 * t)
+  //   );
+  //   dest += 0.6 * tanh(2.0 * env * wave);
   // }
 
   // { // hihat
@@ -157,7 +161,7 @@ vec2 mainAudioDry(vec4 time) {
   //   float vel = fract(st * 0.2 + 0.42);
   //   float env = exp(-exp2(7.0 - 3.0 * vel) * t);
   //   vec2 wave = shotgun(6000.0 * t, 2.0);
-  //   dest += 0.25 * env * sidechain * tanh(8.0 * wave);
+  //   dest += 0.25 * env * duck * tanh(8.0 * wave);
   // }
 
   // { // clap
@@ -181,7 +185,7 @@ vec2 mainAudioDry(vec4 time) {
   //   float vel = fract(st * 0.41 + 0.63);
   //   float env = smoothstep(0.0, 0.02, t) * exp(-exp2(6.0 - 3.0 * vel) * t);
   //   vec2 wave = cyclicNoise(vec3(cis(2800.0 * t), exp2(8.0 + 3.0 * vel) * t), 0.8).xy;
-  //   dest += 0.15 * env * sidechain * tanh(2.0 * wave);
+  //   dest += 0.15 * env * duck * tanh(2.0 * wave);
   // }
 
   // { // perc 1
@@ -228,7 +232,7 @@ vec2 mainAudioDry(vec4 time) {
   //     sum += wave;
   //   }
 
-  //   dest += 0.08 * env * sidechain * tanh(sum);
+  //   dest += 0.08 * env * duck * tanh(sum);
   // }
 
   { // beep
@@ -248,7 +252,7 @@ vec2 mainAudioDry(vec4 time) {
 
   //   float env = mix(exp(-t), exp(-10.0 * t), 0.7);
   //   vec2 wave = shotgun(3800.0 * t, 2.0);
-  //   dest += 0.3 * env * sidechain * tanh(8.0 * wave);
+  //   dest += 0.3 * env * duck * tanh(8.0 * wave);
   // }
 
   { // additive riff
@@ -285,7 +289,7 @@ vec2 mainAudioDry(vec4 time) {
       sum += sin(TAU * phase + lpf.y + hpf.y) / p * lpf.x * hpf.x * env * rotate2D(2.4 * fi);
     }
 
-    dest += 0.2 * mix(0.2, 1.0, sidechain) * tanh(5.0 * sum);
+    dest += 0.2 * mix(0.2, 1.0, duck) * tanh(5.0 * sum);
   }
 
   { // oidos drone
@@ -306,7 +310,7 @@ vec2 mainAudioDry(vec4 time) {
       sum += sin(TAU * phase) * env / 1000.0;
     }
 
-    dest += 1.0 * mix(0.2, 1.0, sidechain) * sum;
+    dest += 1.0 * mix(0.2, 1.0, duck) * sum;
   }
 
   return dest;
@@ -314,6 +318,6 @@ vec2 mainAudioDry(vec4 time) {
 
 vec2 mainAudio(vec4 time) {
   vec2 dest = mainAudioDry(time);
-  dest *= 0.95;
+  dest *= 0.75;
   return dest;
 }

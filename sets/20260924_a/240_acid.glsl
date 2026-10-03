@@ -205,37 +205,40 @@ vec2 cheapnoise(float t) {
   return 2.0 * v;
 }
 
-vec2 mainAudio(vec4 time) {
+vec2 mainAudioDry(vec4 time) {
   vec2 dest = vec2(0);
-  float duck = smoothstep(0.0, 0.4, time.x) * smoothstep(0.0, 0.001, B2T - time.x);
 
-  { // kick
+  float duck = 1.0;
+
+  { // duck
     vec4 seq = seq16(time.y, 0b1000100010001000);
     float t = seq.t;
     float q = seq.q;
-    duck = min(
-      duck,
-      smoothstep(0.0, 0.4, t) * smoothstep(0.0, 0.001, q)
-    );
-
-    float env = smoothstep(0.0, 0.001, q) * exp(-20.0 * max(t - 0.1, 0.0));
-    env *= mix(1.0, exp(-50.0 * t), p3);
-
-    // {
-    //   float tt = t;
-    //   float wave = 0.0;
-
-    //   wave += tanh(2.5 * sin(TAU * (
-    //     50.0 * tt
-    //     - 8.0 * exp2(-tt * 33.0)
-    //   )));
-
-    //   float tick = env * exp2(-500.0 * t);
-    //   wave += env * tanh(1.5 * sin(TAU * 3.0 * tick));
-
-    //   dest += 0.6 * env * wave;
-    // }
+    duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
   }
+
+  // { // kick
+  //   vec4 seq = seq16(time.y, 0b1000100010001000);
+  //   float t = seq.t;
+  //   float q = seq.q;
+  //   duck = smoothstep(0.0, 0.8 * B2T, t) * smoothstep(0.0, 0.001, q);
+
+  //   float env = smoothstep(0.0, 0.001, q) * exp(-20.0 * max(t - 0.1, 0.0));
+  //   env *= mix(1.0, exp(-50.0 * t), p3);
+
+  //   float tt = t;
+  //   float wave = 0.0;
+
+  //   wave += tanh(2.5 * sin(TAU * (
+  //     50.0 * tt
+  //     - 8.0 * exp2(-tt * 33.0)
+  //   )));
+
+  //   float tick = env * exp2(-500.0 * t);
+  //   wave += env * tanh(1.5 * sin(TAU * 3.0 * tick));
+
+  //   dest += 0.7 * env * wave;
+  // }
 
   // { // hihat
   //   vec4 seq = seq16(time.y, 0b1111111111111111);
@@ -302,13 +305,14 @@ vec2 mainAudio(vec4 time) {
   //   dest += 0.3 * mix(0.5, 1.0, duck) * tanh(4.0 * env * wave);
   // }
 
-  // { // hi tom
-  //   vec4 seq = seq16(time.y, 0b0001000001010000);
+  // { // toms
+  //   vec4 seq = seq16(time.y, 0b0001001001010010);
   //   float t = seq.y;
-  //   float q = seq.w;
+
+  //   bool hi = mod(seq.x, 8.0) < 4.0;
 
   //   float env = exp(-20.0 * t);
-  //   float freq = 110.0;
+  //   float freq = hi ? 110.0 : 80.0;
   //   float phase = (
   //     t
   //     - 0.03 * exp2(-40.0 * t)
@@ -317,27 +321,7 @@ vec2 mainAudio(vec4 time) {
   //   phase *= TAU * freq;
 
   //   vec2 wave = cis(phase + sin(3.0 * phase) + 10.0 * t);
-  //   wave.x *= 0.5;
-
-  //   dest += 0.2 * mix(0.8, 1.0, duck) * tanh(2.0 * env * wave);
-  // }
-
-  // { // low tom
-  //   vec4 seq = seq16(time.y, 0b0000001000000010);
-  //   float t = seq.y;
-  //   float q = seq.w;
-
-  //   float env = exp(-20.0 * t);
-  //   float freq = 80.0;
-  //   float phase = (
-  //     t
-  //     - 0.03 * exp2(-40.0 * t)
-  //     - 0.01 * exp2(-150.0 * t)
-  //   );
-  //   phase *= TAU * freq;
-
-  //   vec2 wave = cis(phase + sin(3.0 * phase) + 10.0 * t);
-  //   wave.y *= 0.5;
+  //   wave *= hi ? vec2(0.5, 1.0) : vec2(1.0, 0.5);
 
   //   dest += 0.2 * mix(0.8, 1.0, duck) * tanh(2.0 * env * wave);
   // }
@@ -480,5 +464,11 @@ vec2 mainAudio(vec4 time) {
     dest += 0.25 * mix(0.8, 1.0, duck) * (clip(4.0 * (sum + bias)) - bias);
   }
 
-  return clip(1.3 * tanh(dest));
+  return dest;
+}
+
+vec2 mainAudio(vec4 time) {
+  vec2 dest = mainAudioDry(time);
+  dest *= 0.62;
+  return dest;
 }

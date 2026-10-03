@@ -465,40 +465,44 @@ vec2 mainAudioDry(vec4 time) {
     // }
   
     { // stab
-      const int N_CHORD = 4;
-      const int CHORD[N_CHORD] = int[](
-        0, 3, 7, 10
+      const int N_CHORD = 5;
+      const int CHORD[] = int[](
+        -12, 0, 3, 7, 10, 14
       );
   
       float dq = S2T - t;
-  
-      int N_OSC = 32;
+
+      float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
+      env *= mix(exp2(-1.0 * max(0.0, -dq)), exp2(-60.0 * max(0.0, -dq)), 0.9);
+
+      int N_UNISON = 8;
       vec2 sum=vec2(0);
-      repeat(i, N_OSC) {
-        float fi = float(i);
-        vec3 dice = hash3f(vec3(i, 28, 18));
-  
-        float env = smoothstep(0.0, 0.001, t) * smoothstep(0.0, 0.001, q);
-        env *= mix(exp2(-1.0 * max(0.0, -dq)), exp2(-60.0 * max(0.0, -dq)), 0.9);
-  
-        float pitch = 60.0 + TRANSPOSE + pitchoff + float(CHORD[i % N_CHORD]);
+      repeat(iChord, N_CHORD) {
+        float pitch = 60.0 + TRANSPOSE + pitchoff + float(CHORD[iChord]);
         float freq = p2f(pitch);
-        freq *= exp2(0.04 * (dice.x - 0.5));
-        float phase = freq * t + dice.z;
-  
-        vec2 osc = vec2(0.0);
-        osc += 0.4 * sin(0.5 * TAU * phase);
-        osc += 0.3 * sin(TAU * phase + 1.0);
-        osc += 0.4 * sin(1.5 * TAU * phase + 3.0);
-        osc += 0.3 * sin(3.0 * TAU * phase + 1.0);
-        osc += 0.05 * sin(5.0 * TAU * phase + 2.0);
-        osc += 0.8 * exp2(-20.0 * t) * cis(3.0 * TAU * phase);
-        osc += 0.5 * cyclic(vec3(2, 5, -7) * fract(0.5 * phase), 0.5, 2.0).xy;
-  
-        sum += env * tanh(1.0 * osc) * rotate2D(fi);
+        float phase = freq * t;
+
+        repeat(iUnison, N_UNISON) {
+          vec3 dice = hash3f(vec3(iChord, iUnison, 40));
+
+          float phaseu = phase;
+          phaseu *= exp2(0.04 * (dice.x - 0.5));
+          phaseu += dice.y;
+    
+          vec2 osc = vec2(0.0);
+          osc += 0.4 * sin(0.5 * TAU * phaseu);
+          osc += 0.3 * sin(TAU * phaseu);
+          osc += 0.3 * sin(1.5 * TAU * phaseu);
+          osc += 0.1 * sin(3.0 * TAU * phaseu);
+          osc += 0.1 * sin(5.0 * TAU * phaseu);
+          osc += 0.6 * exp2(-20.0 * t) * cis(3.0 * TAU * phaseu);
+          osc += 0.5 * cyclic(vec3(2, 5, -7) * fract(0.5 * phaseu), 0.5, 2.0).xy;
+    
+          sum += env * tanh(1.0 * osc) * rotate2D(TAU * dice.z);
+        }
       }
   
-      dest += 0.06 * mix(0.4, 1.0, duck) * sum;
+      dest += 0.07 * mix(0.4, 1.0, duck) * sum;
     }
   }
 
@@ -509,7 +513,7 @@ vec2 mainAudio(vec4 time) {
   vec2 dest = vec2(0);
 
   dest = mainAudioDry(time);
-  // dest = mix(vec2(dot(dest, vec2(0.5))), dest, 0.2);
+  dest *= 0.86;
 
-  return clip(1.3 * tanh(dest));
+  return dest;
 }
